@@ -20,6 +20,9 @@ class AuthAPI:
             timeout=10,
         )
 
+        print(response.status_code)
+        print(response.text)
+
         if response.status_code == 200:
             return {
                 "success": True,
