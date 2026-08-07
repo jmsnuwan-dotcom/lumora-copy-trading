@@ -1,6 +1,19 @@
+# Environment
+.env
 .venv/
+
+# Python
 __pycache__/
 *.pyc
+
+# Logs
+*.log
+
+# Database
 *.db
-.env
-logs/
+
+# VS Code
+.vscode/
+
+# MT5
+MQL5/
