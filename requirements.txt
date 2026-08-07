@@ -7,9 +7,6 @@ passlib[bcrypt]
 python-multipart
 websockets
 httpx
-MetaTrader5
-PySide6
 python-dotenv
 alembic
 email-validator
-PySide6-Fluent-Widgets
