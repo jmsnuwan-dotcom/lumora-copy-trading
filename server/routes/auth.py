@@ -44,6 +44,8 @@ def register(
         )
 
     except ValueError as e:
+        print("REGISTER ERROR:", str(e))
+
         raise HTTPException(
             status_code=400,
             detail=str(e),
