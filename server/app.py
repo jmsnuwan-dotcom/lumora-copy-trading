@@ -12,6 +12,7 @@ from server.routes.heartbeat import router as heartbeat_router
 from server.routes.trade import router as trade_router
 from server.routes.ws import router as ws_router
 from server.routes.plan import router as plan_router
+from server.database.db import Base, engine
 
 APP_NAME = "Lumora Copy Trading Platform"
 APP_VERSION = "1.0.0"
@@ -22,6 +23,9 @@ async def lifespan(app: FastAPI):
     print("=" * 60)
     print(f"{APP_NAME} v{APP_VERSION}")
     print("Server Starting...")
+
+    Base.metadata.create_all(bind=engine)
+
     print("=" * 60)
 
     yield
