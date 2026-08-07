@@ -27,6 +27,10 @@ class AuthService:
         if password != confirm_password:
             raise ValueError("Passwords do not match.")
 
+        print("PASSWORD =", password)
+        print("PASSWORD TYPE =", type(password))
+        print("PASSWORD LENGTH =", len(password))
+
         user = User(
             full_name=full_name,
             email=email,
