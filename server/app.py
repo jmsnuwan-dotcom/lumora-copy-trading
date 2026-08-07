@@ -13,6 +13,8 @@ from server.routes.trade import router as trade_router
 from server.routes.ws import router as ws_router
 from server.routes.plan import router as plan_router
 from server.database.db import Base, engine
+from server.database.db import SessionLocal
+from server.database.seeder import seed_database
 
 APP_NAME = "Lumora Copy Trading Platform"
 APP_VERSION = "1.0.0"
@@ -25,6 +27,13 @@ async def lifespan(app: FastAPI):
     print("Server Starting...")
 
     Base.metadata.create_all(bind=engine)
+
+    db = SessionLocal()
+
+    try:
+        seed_database(db)
+    finally:
+        db.close()
 
     print("=" * 60)
 
