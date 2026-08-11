@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from server.database.db import get_db
 from server.database.models.user import User
+from server.database.models.subscription import Subscription
 from server.schemas.subscription import (
     SubscriptionCreate,
     SubscriptionResponse,
@@ -51,6 +52,7 @@ def create_subscription(
             detail=str(e),
         )
 
+
 @router.get(
     "",
     response_model=list[SubscriptionResponse],
@@ -59,6 +61,7 @@ def get_subscriptions(
     db: Session = Depends(get_db),
 ):
     return SubscriptionService.get_all(db)
+
 
 @router.get(
     "/payment-settings",
@@ -69,6 +72,7 @@ def get_payment_settings(
 ):
     return PaymentSettingsService.get(db)
 
+
 @router.get(
     "/me",
     response_model=SubscriptionResponse,
@@ -77,15 +81,21 @@ def get_my_subscription(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    subscription = SubscriptionService.get_active_by_user(
-        db,
-        current_user.id,
+    subscription = (
+        db.query(Subscription)
+        .filter(
+            Subscription.user_id == current_user.id,
+        )
+        .order_by(
+            Subscription.id.desc()
+        )
+        .first()
     )
 
     if subscription is None:
         raise HTTPException(
             status_code=404,
-            detail="No active subscription.",
+            detail="No subscription found.",
         )
 
     return subscription
@@ -107,26 +117,41 @@ async def submit_payment(
         ".pdf",
     }
 
-    extension = Path(slip.filename or "").suffix.lower()
+    extension = Path(
+        slip.filename or ""
+    ).suffix.lower()
 
     if extension not in allowed_extensions:
         raise HTTPException(
             status_code=400,
-            detail="Only JPG, JPEG, PNG, and PDF files are allowed.",
+            detail=(
+                "Only JPG, JPEG, PNG, and PDF "
+                "files are allowed."
+            ),
         )
 
-    payment_dir = Path("storage/payment_slips")
+    payment_dir = Path(
+        "storage/payment_slips"
+    )
+
     payment_dir.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    filename = f"{uuid4().hex}{extension}"
-    file_path = payment_dir / filename
+    filename = (
+        f"{uuid4().hex}{extension}"
+    )
+
+    file_path = (
+        payment_dir / filename
+    )
 
     try:
         with file_path.open("wb") as buffer:
-            while chunk := await slip.read(1024 * 1024):
+            while chunk := await slip.read(
+                1024 * 1024
+            ):
                 buffer.write(chunk)
 
         return SubscriptionService.submit_payment(
