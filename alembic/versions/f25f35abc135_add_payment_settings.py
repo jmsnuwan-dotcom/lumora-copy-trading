@@ -23,58 +23,24 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
 
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    if "payment_settings" in inspector.get_table_names():
+        return
+
     op.create_table(
         "payment_settings",
-        sa.Column(
-            "id",
-            sa.Integer(),
-            nullable=False,
-        ),
-        sa.Column(
-            "bank_name",
-            sa.String(length=100),
-            nullable=False,
-        ),
-        sa.Column(
-            "account_name",
-            sa.String(length=150),
-            nullable=False,
-        ),
-        sa.Column(
-            "account_number",
-            sa.String(length=100),
-            nullable=False,
-        ),
-        sa.Column(
-            "branch",
-            sa.String(length=100),
-            nullable=False,
-        ),
-        sa.Column(
-            "bank_instructions",
-            sa.String(length=500),
-            nullable=False,
-        ),
-        sa.Column(
-            "crypto_currency",
-            sa.String(length=20),
-            nullable=False,
-        ),
-        sa.Column(
-            "crypto_network",
-            sa.String(length=50),
-            nullable=False,
-        ),
-        sa.Column(
-            "crypto_address",
-            sa.String(length=255),
-            nullable=False,
-        ),
-        sa.Column(
-            "crypto_instructions",
-            sa.String(length=500),
-            nullable=False,
-        ),
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("bank_name", sa.String(length=100), nullable=False),
+        sa.Column("account_name", sa.String(length=150), nullable=False),
+        sa.Column("account_number", sa.String(length=100), nullable=False),
+        sa.Column("branch", sa.String(length=100), nullable=False),
+        sa.Column("bank_instructions", sa.String(length=500), nullable=False),
+        sa.Column("crypto_currency", sa.String(length=20), nullable=False),
+        sa.Column("crypto_network", sa.String(length=50), nullable=False),
+        sa.Column("crypto_address", sa.String(length=255), nullable=False),
+        sa.Column("crypto_instructions", sa.String(length=500), nullable=False),
         sa.Column(
             "updated_at",
             sa.DateTime(timezone=True),
@@ -82,14 +48,6 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-
-    op.create_index(
-        op.f("ix_payment_settings_id"),
-        "payment_settings",
-        ["id"],
-        unique=False,
-    )
-
 
 def downgrade() -> None:
     """Downgrade schema."""
