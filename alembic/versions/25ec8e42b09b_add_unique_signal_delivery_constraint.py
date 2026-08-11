@@ -9,6 +9,7 @@ Create Date: 2026-08-11 08:17:51.018626
 from typing import Sequence, Union
 
 from alembic import op
+import sqlalchemy as sa
 
 
 revision: str = "25ec8e42b09b"
@@ -18,11 +19,22 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    """Upgrade schema."""
 
-    with op.batch_alter_table(
-        "signal_deliveries"
-    ) as batch_op:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
 
+    constraints = inspector.get_unique_constraints("signal_deliveries")
+
+    existing_names = {
+        constraint["name"]
+        for constraint in constraints
+    }
+
+    if "uq_signal_delivery_signal_user_connection" in existing_names:
+        return
+
+    with op.batch_alter_table("signal_deliveries") as batch_op:
         batch_op.create_unique_constraint(
             "uq_signal_delivery_signal_user_connection",
             [
