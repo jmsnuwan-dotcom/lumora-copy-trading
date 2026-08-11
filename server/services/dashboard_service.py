@@ -35,14 +35,23 @@ class DashboardService:
             .filter(
                 Subscription.user_id == user_id,
                 Subscription.status.in_(
-                    ["APPROVED", "ACTIVE"]
+                    [
+                        "PENDING",
+                        "APPROVED",
+                        "ACTIVE",
+                    ]
                 ),
             )
+            .order_by(
+                Subscription.id.desc()
+            )
             .first()
-        )   
+        )
 
         if not subscription:
-            raise ValueError("No active subscription.")
+            raise ValueError(
+                "No subscription found."
+            )
 
         user = (
             db.query(User)
@@ -50,21 +59,42 @@ class DashboardService:
             .first()
         )
 
+        if not user:
+            raise ValueError(
+                "User not found."
+            )
+
         package = (
             db.query(Package)
-            .filter(Package.id == subscription.package_id)
+            .filter(
+                Package.id == subscription.package_id
+            )
             .first()
         )
+
+        if not package:
+            raise ValueError(
+                "Package not found."
+            )
 
         plan = (
             db.query(Plan)
-            .filter(Plan.id == subscription.plan_id)
+            .filter(
+                Plan.id == subscription.plan_id
+            )
             .first()
         )
 
+        if not plan:
+            raise ValueError(
+                "Plan not found."
+            )
+
         connection = (
             db.query(Connection)
-            .filter(Connection.user_id == user_id)
+            .filter(
+                Connection.user_id == user_id
+            )
             .first()
         )
 
@@ -97,7 +127,9 @@ class DashboardService:
             end_date = subscription.end_date
 
             if end_date.tzinfo is None:
-                end_date = end_date.replace(tzinfo=UTC)
+                end_date = end_date.replace(
+                    tzinfo=UTC
+                )
 
             remaining_days = (
                 end_date - now
@@ -105,10 +137,6 @@ class DashboardService:
 
             if remaining_days < 0:
                 remaining_days = 0
-
-        # ==========================================
-        # EFFECTIVE SIGNAL STATUS
-        # ==========================================
 
         signals_enabled = False
 
@@ -118,69 +146,75 @@ class DashboardService:
             and package.is_active
         ):
 
-            # -------------------------------
-            # 24H TRIAL
-            # -------------------------------
+            if subscription.status == "ACTIVE":
 
-            if subscription.is_trial:
+                if subscription.is_trial:
 
-                if subscription.trial_ends_at:
+                    if subscription.trial_ends_at:
 
-                    trial_ends_at = (
-                        subscription.trial_ends_at
-                    )
-
-                    if trial_ends_at.tzinfo is None:
                         trial_ends_at = (
-                            trial_ends_at.replace(
-                                tzinfo=UTC
-                            )
+                            subscription.trial_ends_at
                         )
 
-                    if trial_ends_at > datetime.now(UTC):
-                        signals_enabled = True
+                        if (
+                            trial_ends_at.tzinfo
+                            is None
+                        ):
+                            trial_ends_at = (
+                                trial_ends_at.replace(
+                                    tzinfo=UTC
+                                )
+                            )
 
-            # -------------------------------
-            # NORMAL PAID PACKAGE
-            # -------------------------------
+                        if (
+                            trial_ends_at
+                            > datetime.now(UTC)
+                        ):
+                            signals_enabled = True
 
-            else:
+                else:
 
-                if subscription.start_date:
+                    if subscription.start_date:
 
-                    start_date = (
-                        subscription.start_date
-                    )
-
-                    if start_date.tzinfo is None:
                         start_date = (
-                            start_date.replace(
-                                tzinfo=UTC
-                            )
+                            subscription.start_date
                         )
 
-                    now = datetime.now(UTC)
-
-                    if start_date <= now:
-
-                        if subscription.end_date:
-
-                            end_date = (
-                                subscription.end_date
+                        if (
+                            start_date.tzinfo
+                            is None
+                        ):
+                            start_date = (
+                                start_date.replace(
+                                    tzinfo=UTC
+                                )
                             )
 
-                            if end_date.tzinfo is None:
+                        now = datetime.now(UTC)
+
+                        if start_date <= now:
+
+                            if subscription.end_date:
+
                                 end_date = (
-                                    end_date.replace(
-                                        tzinfo=UTC
-                                    )
+                                    subscription.end_date
                                 )
 
-                            if end_date >= now:
-                                signals_enabled = True
+                                if (
+                                    end_date.tzinfo
+                                    is None
+                                ):
+                                    end_date = (
+                                        end_date.replace(
+                                            tzinfo=UTC
+                                        )
+                                    )
 
-                        else:
-                            signals_enabled = True
+                                if end_date >= now:
+                                    signals_enabled = True
+
+                            else:
+                                signals_enabled = True
 
         return {
             "full_name": user.full_name,
@@ -188,7 +222,9 @@ class DashboardService:
 
             "package": package.name,
             "plan": plan.name,
-            "lot_size": float(package.lot_size),
+            "lot_size": float(
+                package.lot_size
+            ),
 
             "status": subscription.status,
             "is_active": user.is_active,
