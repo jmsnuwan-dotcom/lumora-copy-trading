@@ -145,48 +145,6 @@ def view_payment_slip(
         filename=file_path.name,
     )
 
-@router.get(
-    "/payments/{subscription_id}/slip",
-)
-def view_payment_slip(
-    subscription_id: int,
-    db: Session = Depends(get_db),
-    admin: User = Depends(require_admin),
-):
-    subscription = (
-        db.query(Subscription)
-        .filter(
-            Subscription.id == subscription_id,
-        )
-        .first()
-    )
-
-    if not subscription:
-        raise HTTPException(
-            status_code=404,
-            detail="Payment not found.",
-        )
-
-    if not subscription.payment_slip:
-        raise HTTPException(
-            status_code=404,
-            detail="Payment slip not found.",
-        )
-
-    file_path = Path(
-        subscription.payment_slip
-    )
-
-    if not file_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail="Payment slip file not found.",
-        )
-
-    return FileResponse(
-        path=file_path,
-        filename=file_path.name,
-    )
 
 @router.post(
     "/payments/{subscription_id}/approve",
@@ -300,3 +258,4 @@ def update_payment_settings(
         db=db,
         request=request,
     )
+
