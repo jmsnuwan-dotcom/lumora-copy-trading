@@ -153,12 +153,12 @@ class DashboardWindow(QMainWindow):
             )
         else:
             self.expiry.setText(
-                "Expiry : Lifetime"
+                "Expiry : Not Started"
             )
 
         if data["remaining_days"] is None:
             self.remaining.setText(
-                "Remaining Days : Unlimited"
+                "Remaining Days : Not Started"
             )
         else:
             self.remaining.setText(

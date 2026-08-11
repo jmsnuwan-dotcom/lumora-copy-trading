@@ -74,29 +74,66 @@ class AdminAPI:
         token: str,
         subscription_id: int,
     ):
+
         try:
             response = requests.get(
                 f"{API_URL}/admin/payments/{subscription_id}/slip",
                 headers={
                     "Authorization": f"Bearer {token}",
                 },
-                timeout=10,
+                timeout=20,
             )
 
         except requests.RequestException as e:
             print(
                 "PAYMENT SLIP REQUEST ERROR:",
-                e,
+                repr(e),
             )
             return None
 
+        print(
+            "PAYMENT SLIP STATUS:",
+            response.status_code,
+        )
+
+        print(
+            "PAYMENT SLIP CONTENT TYPE:",
+            response.headers.get("content-type"),
+        )
+
+        print(
+            "PAYMENT SLIP RESPONSE:",
+            response.text[:1000]
+            if "text" in response.headers.get(
+                "content-type",
+                "",
+            ).lower()
+            else "<BINARY FILE>",
+        )
+
         if response.status_code != 200:
+
             print(
                 "PAYMENT SLIP ERROR:",
                 response.status_code,
                 response.text,
             )
+
             return None
+
+        if not response.content:
+
+            print(
+                "PAYMENT SLIP ERROR: EMPTY FILE",
+            )
+
+            return None
+
+        print(
+            "PAYMENT SLIP SIZE:",
+            len(response.content),
+            "bytes",
+        )
 
         return response.content
 

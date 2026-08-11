@@ -299,7 +299,7 @@ class SubscriptionService:
         now = datetime.now(UTC)
 
         # Save the normal package period after the trial.
-        package_start = now + timedelta(minutes=2)
+        package_start = now + timedelta(hours=24)
 
         package_end = None
 
@@ -311,7 +311,7 @@ class SubscriptionService:
         subscription.is_trial = True
         subscription.trial_started_at = now
         subscription.trial_ends_at = (
-            now + timedelta(minutes=2)
+            now + timedelta(hours=24)
         )
 
         subscription.approved_by = admin_id
