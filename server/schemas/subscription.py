@@ -18,7 +18,10 @@ class SubscriptionResponse(BaseModel):
     package_id: int
     plan_id: int
     status: str
-    start_date: datetime
+    payment_status: str
+    payment_slip: str | None
+    payment_submitted_at: datetime | None
+    start_date: datetime | None
     end_date: datetime | None
 
     package: PackageResponse | None = None

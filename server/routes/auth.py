@@ -25,10 +25,8 @@ def register(
     request: RegisterRequest,
     db: Session = Depends(get_db),
 ):
-
     try:
-
-        AuthService.register(
+        user = AuthService.register(
             db=db,
             full_name=request.full_name,
             email=request.email,
@@ -39,8 +37,11 @@ def register(
             plan_id=request.plan_id,
         )
 
+        token = create_access_token(user.id)
+
         return AuthResponse(
             message="Registration successful. Waiting for payment approval.",
+            access_token=token,
         )
 
     except ValueError as e:
@@ -57,7 +58,7 @@ def login(
     db: Session = Depends(get_db),
 ):
     print("EMAIL:", request.email)
-    print("PASSWORD:", request.password)
+
 
     try:
         user = AuthService.login(

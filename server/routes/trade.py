@@ -10,6 +10,7 @@ from server.schemas.trade import (
 from server.services.trade_service import TradeService
 from server.utils.dependencies import get_current_user
 
+
 router = APIRouter(
     prefix="/trades",
     tags=["Trades"],
@@ -17,6 +18,7 @@ router = APIRouter(
 
 
 def _ensure_admin(user) -> None:
+
     if getattr(user, "role", None) != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -32,16 +34,27 @@ async def buy_trade(
 ):
     _ensure_admin(current_user)
 
-    await TradeService.send_trade(
-        db=db,
-        admin_id=current_user.id,
-        action="BUY",
-        symbol=request.symbol,
-        trade_id=request.trade_id,
-        magic_number=request.magic_number,
-    )
+    try:
 
-    return {"success": True}
+        await TradeService.send_trade(
+            db=db,
+            admin_id=current_user.id,
+            action="BUY",
+            symbol=request.symbol,
+            trade_id=request.trade_id,
+        )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    return {
+        "success": True,
+        "message": "BUY signal sent.",
+    }
 
 
 @router.post("/sell")
@@ -52,33 +65,56 @@ async def sell_trade(
 ):
     _ensure_admin(current_user)
 
-    await TradeService.send_trade(
-        db=db,
-        admin_id=current_user.id,
-        action="SELL",
-        symbol=request.symbol,
-        trade_id=request.trade_id,
-        magic_number=request.magic_number,
-    )
+    try:
 
-    return {"success": True}
+        await TradeService.send_trade(
+            db=db,
+            admin_id=current_user.id,
+            action="SELL",
+            symbol=request.symbol,
+            trade_id=request.trade_id,
+        )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    return {
+        "success": True,
+        "message": "SELL signal sent.",
+    }
 
 
 @router.post("/close")
 async def close_trade(
     request: CloseTradeRequest,
-    db: Session =Depends(get_db),
+    db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     _ensure_admin(current_user)
 
-    await TradeService.send_trade(
-        db=db,
-        admin_id=current_user.id,
-        action="CLOSE",
-        symbol="",
-        trade_id=request.trade_id,
-        magic_number=request.magic_number,
-    )
+    try:
 
-    return {"success": True}    
+        await TradeService.send_trade(
+            db=db,
+            admin_id=current_user.id,
+            action="CLOSE",
+            symbol="",
+            trade_id=request.trade_id,
+            magic_number=request.magic_number,
+        )
+
+    except ValueError as e:
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    return {
+        "success": True,
+        "message": "CLOSE signal sent.",
+    }

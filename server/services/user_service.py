@@ -37,3 +37,25 @@ class UserService:
         db.refresh(user)
 
         return user.signals_enabled
+
+    @staticmethod
+    def toggle_active(
+        db: Session,
+        user_id: int,
+    ):
+
+        user = (
+            db.query(User)
+            .filter(User.id == user_id)
+            .first()
+        )
+
+        if not user:
+            raise ValueError("User not found.")
+
+        user.is_active = not user.is_active
+
+        db.commit()
+        db.refresh(user)
+
+        return user.is_active

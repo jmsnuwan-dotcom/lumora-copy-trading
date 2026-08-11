@@ -1,9 +1,11 @@
 import requests
 
+from client.config import API_URL
+
 
 class SignalDeliveryAPI:
 
-    BASE_URL = "http://127.0.0.1:8000"
+    BASE_URL = API_URL
 
     @staticmethod
     def mark_executed(

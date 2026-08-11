@@ -19,7 +19,7 @@ try:
     else:
         user.password_hash = hash_password("Admin@123")
         db.commit()
-        print("Password reset successful.")
+
 
 finally:
     db.close()

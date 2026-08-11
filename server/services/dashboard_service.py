@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,9 @@ from server.database.models import (
     Plan,
     Subscription,
     User,
+)
+from server.services.subscription_service import (
+    SubscriptionService,
 )
 
 
@@ -19,14 +22,24 @@ class DashboardService:
         user_id: int,
     ):
 
+        SubscriptionService.process_expired_trials(
+            db=db,
+        )
+
+        SubscriptionService.process_expired_packages(
+            db=db,
+        )
+
         subscription = (
             db.query(Subscription)
             .filter(
                 Subscription.user_id == user_id,
-                Subscription.status == "ACTIVE",
+                Subscription.status.in_(
+                    ["APPROVED", "ACTIVE"]
+                ),
             )
             .first()
-        )
+        )   
 
         if not subscription:
             raise ValueError("No active subscription.")
@@ -56,34 +69,147 @@ class DashboardService:
         )
 
         connection_status = "Offline"
+        mt5_login = None
+        mt5_server = None
+        last_seen = None
+        client_version = None
 
-        if connection and connection.is_online:
-            connection_status = "Online"
+        if connection:
+            connection_status = (
+                "Online"
+                if connection.is_online
+                else "Offline"
+            )
+
+            mt5_login = connection.mt5_login
+            mt5_server = connection.mt5_server
+            last_seen = connection.last_seen
+            client_version = (
+                connection.client_version
+                or connection.app_version
+            )
 
         remaining_days = None
 
         if subscription.end_date:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
+
+            end_date = subscription.end_date
+
+            if end_date.tzinfo is None:
+                end_date = end_date.replace(tzinfo=UTC)
 
             remaining_days = (
-                subscription.end_date - now
+                end_date - now
             ).days
 
             if remaining_days < 0:
                 remaining_days = 0
 
+        # ==========================================
+        # EFFECTIVE SIGNAL STATUS
+        # ==========================================
+
+        signals_enabled = False
+
+        if (
+            user.is_active
+            and user.signals_enabled
+            and package.is_active
+        ):
+
+            # -------------------------------
+            # 24H TRIAL
+            # -------------------------------
+
+            if subscription.is_trial:
+
+                if subscription.trial_ends_at:
+
+                    trial_ends_at = (
+                        subscription.trial_ends_at
+                    )
+
+                    if trial_ends_at.tzinfo is None:
+                        trial_ends_at = (
+                            trial_ends_at.replace(
+                                tzinfo=UTC
+                            )
+                        )
+
+                    if trial_ends_at > datetime.now(UTC):
+                        signals_enabled = True
+
+            # -------------------------------
+            # NORMAL PAID PACKAGE
+            # -------------------------------
+
+            else:
+
+                if subscription.start_date:
+
+                    start_date = (
+                        subscription.start_date
+                    )
+
+                    if start_date.tzinfo is None:
+                        start_date = (
+                            start_date.replace(
+                                tzinfo=UTC
+                            )
+                        )
+
+                    now = datetime.now(UTC)
+
+                    if start_date <= now:
+
+                        if subscription.end_date:
+
+                            end_date = (
+                                subscription.end_date
+                            )
+
+                            if end_date.tzinfo is None:
+                                end_date = (
+                                    end_date.replace(
+                                        tzinfo=UTC
+                                    )
+                                )
+
+                            if end_date >= now:
+                                signals_enabled = True
+
+                        else:
+                            signals_enabled = True
+
         return {
             "full_name": user.full_name,
             "email": user.email,
+
             "package": package.name,
             "plan": plan.name,
             "lot_size": float(package.lot_size),
+
             "status": subscription.status,
+            "is_active": user.is_active,
+
+            "start_date": subscription.start_date,
             "expire_date": subscription.end_date,
+
+            "is_trial": subscription.is_trial,
+            "trial_ends_at": subscription.trial_ends_at,
+
             "connection_status": connection_status,
-            "remaining_days": remaining_days,
+            "mt5_login": mt5_login,
+            "mt5_server": mt5_server,
+            "last_seen": last_seen,
+            "client_version": client_version,
+
             "balance": None,
             "equity": None,
             "open_trades": None,
-            "signals_enabled": user.signals_enabled,
+
+            "remaining_days": remaining_days,
+
+            "signals_enabled": signals_enabled,
         }

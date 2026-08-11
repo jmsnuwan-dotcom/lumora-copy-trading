@@ -25,6 +25,16 @@ class SignalDeliveryService:
         mt5_ticket: int,
     ) -> SignalDelivery:
 
+        if delivery.status == "EXECUTED":
+            raise ValueError(
+                "Signal delivery has already been executed."
+            )
+
+        if delivery.status == "CLOSED":
+            raise ValueError(
+                "Signal delivery is already closed."
+            )
+
         delivery.status = "EXECUTED"
         delivery.executed_at = datetime.now(UTC)
         delivery.mt5_ticket = mt5_ticket

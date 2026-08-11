@@ -27,17 +27,13 @@ class AuthService:
         if password != confirm_password:
             raise ValueError("Passwords do not match.")
 
-        print("PASSWORD =", password)
-        print("PASSWORD TYPE =", type(password))
-        print("PASSWORD LENGTH =", len(password))
-
         user = User(
             full_name=full_name,
             email=email,
             password_hash=hash_password(password),
             role="user",
             status="pending_payment",
-            is_active=False,
+            is_active=True,
             trial_used=False,
             phone_number=phone_number,
         )
@@ -49,8 +45,11 @@ class AuthService:
             package_id=package_id,
             plan_id=plan_id,
             status="PENDING",
-            approved_by=1,
-            start_date=datetime.now(UTC),
+            approved_by=None,
+            payment_status="NOT_PAID",
+            payment_slip=None,
+            payment_submitted_at=None,
+            start_date=None,
             end_date=None,
         )
 
@@ -73,20 +72,17 @@ class AuthService:
         if not user:
             return None
 
-        ok = verify_password(password, user.password_hash)
+        ok = verify_password(
+            password,
+            user.password_hash,
+        )
 
         if not ok:
             return None
-        
-        if (
-            user.role != "admin"
-            and (
-                user.status != "active"
-                or not user.is_active
-            )
-        ):
+
+        if not user.is_active:
             raise ValueError(
-                "Your account is waiting for payment approval."
+                "Account is deactivated."
             )
 
         return user

@@ -13,7 +13,7 @@ load_dotenv(BASE_DIR / ".env")
 
 API_URL = os.getenv(
     "API_URL",
-    "http://127.0.0.1:8000",
+    "https://lumora-copy-trading-production.up.railway.app",
 )
 
 EMAIL = os.getenv("EMAIL", "")

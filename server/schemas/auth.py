@@ -10,6 +10,7 @@ class RegisterRequest(BaseModel):
     package_id: int
     plan_id: int
 
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -17,3 +18,5 @@ class LoginRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     message: str
+    access_token: str
+    token_type: str = "bearer"

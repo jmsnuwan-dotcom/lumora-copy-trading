@@ -16,9 +16,18 @@ class DashboardAPI:
             timeout=10,
         )
 
-        if response.status_code != 200:
-            return None
+        print("DASHBOARD STATUS:", response.status_code)
+        print("DASHBOARD RESPONSE:", response.text)
 
-        data = response.json()
-        
-        return data
+        if response.status_code == 200:
+            return response.json()
+
+        if response.status_code in (401, 403, 404):
+            raise PermissionError(
+                response.json().get(
+                    "detail",
+                    "Subscription is not active.",
+                )
+            )
+
+        return None

@@ -15,6 +15,9 @@ from server.routes.plan import router as plan_router
 from server.database.db import Base, engine
 from server.database.db import SessionLocal
 from server.database.seeder import seed_database
+from server.routes.admin import router as admin_router
+from server.routes.signal import router as signal_router
+from server.routes.signal_delivery import router as signal_delivery_router
 
 APP_NAME = "Lumora Copy Trading Platform"
 APP_VERSION = "1.0.0"
@@ -60,10 +63,13 @@ app.include_router(package_router)
 app.include_router(plan_router)
 app.include_router(user_router)
 app.include_router(subscription_router)
+app.include_router(admin_router)
 app.include_router(dashboard_router)
 app.include_router(connection_router)
 app.include_router(heartbeat_router)
 app.include_router(trade_router)
+app.include_router(signal_router)
+app.include_router(signal_delivery_router)
 app.include_router(ws_router)
 
 

@@ -12,8 +12,9 @@ from PySide6.QtWidgets import (
 from client.api.auth_api import AuthAPI
 from client.ui.windows.register_window import RegisterWindow
 from client.ui.windows.dashboard_window import DashboardWindow
-from client.services.client_service import ClientService
-
+from client.ui.windows.admin_dashboard_window import (
+    AdminDashboardWindow,
+)
 
 class LoginWindow(QMainWindow):
 
@@ -78,18 +79,29 @@ class LoginWindow(QMainWindow):
 
         self.token = data["access_token"]
 
-        print("TOKEN =", self.token)
-
         QMessageBox.information(
             self,
             "Success",
             "Login Successful.",
         )
 
-        ClientService.start(self.token)
+        if data["user"]["role"] == "admin":
+
+            self.admin_dashboard_window = (
+                AdminDashboardWindow(
+                    self.token
+                )
+            )
+
+            self.admin_dashboard_window.show()
+            self.hide()
+
+            return
 
         self.dashboard = DashboardWindow(self.token)
-        self.dashboard.show()
+
+        if not self.dashboard.redirected_to_payment:
+            self.dashboard.show()
 
         self.hide()
         

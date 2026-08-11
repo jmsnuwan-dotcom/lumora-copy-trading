@@ -11,6 +11,7 @@ from client.config import (
 )
 from client.mt5.symbol_loader import SymbolLoader
 from client.mt5.symbol_resolver import SymbolResolver
+from client.storage.symbol_storage import SymbolStorage
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +41,8 @@ class TradeExecutor:
         print("BUY EXECUTE")
 
         for _ in range(message["trade_copies"]):
+
             self._open(
-                symbol=message["symbol"],
                 volume=message["lot_size"],
                 magic=message["magic_number"],
                 order_type=mt5.ORDER_TYPE_BUY,
@@ -52,8 +53,8 @@ class TradeExecutor:
         print("SELL EXECUTE")
 
         for _ in range(message["trade_copies"]):
+
             self._open(
-                symbol=message["symbol"],
                 volume=message["lot_size"],
                 magic=message["magic_number"],
                 order_type=mt5.ORDER_TYPE_SELL,
@@ -77,9 +78,47 @@ class TradeExecutor:
 
             self._close_position(position)
 
+    def _get_broker_symbol(self) -> str | None:
+
+        selected_symbol = (
+            SymbolStorage.get_gold_symbol()
+        )
+
+        print(
+            "SELECTED GOLD SYMBOL :",
+            selected_symbol,
+        )
+
+        if not selected_symbol:
+            print(
+                "NO GOLD SYMBOL SELECTED"
+            )
+            return None
+
+        broker_symbols = (
+            SymbolLoader.get_symbols()
+        )
+
+        if not broker_symbols:
+            print(
+                "NO BROKER SYMBOLS FOUND"
+            )
+            return None
+
+        broker_symbol = SymbolResolver.resolve(
+            selected_symbol,
+            broker_symbols,
+        )
+
+        print(
+            "BROKER SYMBOL :",
+            broker_symbol,
+        )
+
+        return broker_symbol
+
     def _open(
         self,
-        symbol: str,
         volume: float,
         magic: int,
         order_type: int,
@@ -87,36 +126,66 @@ class TradeExecutor:
 
         print("=" * 60)
         print("OPEN START")
-        print("SYMBOL :", symbol)
         print("LOT    :", volume)
         print("MAGIC  :", magic)
         print("=" * 60)
 
-        broker_symbols = SymbolLoader.get_symbols()
-
-        broker_symbol = SymbolResolver.resolve(
-            symbol,
-            broker_symbols,
+        broker_symbol = (
+            self._get_broker_symbol()
         )
 
-        print("BROKER SYMBOL :", broker_symbol)
-
         if broker_symbol is None:
-            print("BROKER SYMBOL NOT FOUND")
+
+            print(
+                "BROKER GOLD SYMBOL NOT FOUND"
+            )
+
             return
 
-        tick = mt5.symbol_info_tick(broker_symbol)
-        symbol_info = mt5.symbol_info(broker_symbol)
+        if not mt5.symbol_select(
+            broker_symbol,
+            True,
+        ):
 
-        print("SYMBOL INFO :", symbol_info)
-        print("TICK :", tick)
+            print(
+                "SYMBOL SELECT FAILED :",
+                broker_symbol,
+            )
+
+            return
+
+        tick = mt5.symbol_info_tick(
+            broker_symbol
+        )
+
+        symbol_info = mt5.symbol_info(
+            broker_symbol
+        )
+
+        print(
+            "SYMBOL INFO :",
+            symbol_info,
+        )
+
+        print(
+            "TICK :",
+            tick,
+        )
 
         if symbol_info is None:
-            print("SYMBOL INFO NONE")
+
+            print(
+                "SYMBOL INFO NONE"
+            )
+
             return
 
         if tick is None:
-            print("TICK NONE")
+
+            print(
+                "TICK NONE"
+            )
+
             return
 
         price = (
@@ -150,21 +219,86 @@ class TradeExecutor:
 
         result = mt5.order_send(request)
 
-        print("ORDER RESULT :", result)
+        print(
+            "ORDER RESULT :",
+            result,
+        )
 
         if result is None:
-            print("ORDER SEND RETURNED NONE")
-            print(mt5.last_error())
+
+            print(
+                "ORDER SEND RETURNED NONE"
+            )
+
+            print(
+                mt5.last_error()
+            )
+
             return
 
-        print("RETCODE :", result.retcode)
-        print("COMMENT :", result.comment)
+        print(
+            "RETCODE :",
+            result.retcode,
+        )
 
-        if result.retcode != mt5.TRADE_RETCODE_DONE:
-            print("ORDER FAILED")
+        print(
+            "COMMENT :",
+            result.comment,
+        )
+
+        if (
+            result.retcode
+            != mt5.TRADE_RETCODE_DONE
+        ):
+
+            print(
+                "ORDER FAILED"
+            )
+
             return
 
-        print("ORDER SUCCESS :", result.order)
+        print(
+            "ORDER SUCCESS :",
+            result.order,
+        )
+
+        positions = mt5.positions_get(
+            symbol=broker_symbol
+        )
+
+        print("=" * 60)
+        print("POSITIONS AFTER ORDER")
+
+        if positions is None:
+            print(
+                "POSITIONS RESULT : NONE"
+            )
+            print(
+                "MT5 LAST ERROR :",
+                mt5.last_error()
+            )
+
+        else:
+            print(
+                "POSITION COUNT :",
+                len(positions)
+            )
+
+            for position in positions:
+                print(
+                    "TICKET :",
+                    position.ticket,
+                    "SYMBOL :",
+                    position.symbol,
+                    "TYPE :",
+                    position.type,
+                    "VOLUME :",
+                    position.volume,
+                    "MAGIC :",
+                    position.magic,
+                )
+
+        print("=" * 60)
 
     def _calculate_sl_tp(
         self,
@@ -176,31 +310,65 @@ class TradeExecutor:
         tp_points = SL_POINTS * RR
 
         if order_type == mt5.ORDER_TYPE_BUY:
-            sl = price - (SL_POINTS * point)
-            tp = price + (tp_points * point)
+
+            sl = price - (
+                SL_POINTS * point
+            )
+
+            tp = price + (
+                tp_points * point
+            )
+
         else:
-            sl = price + (SL_POINTS * point)
-            tp = price - (tp_points * point)
+
+            sl = price + (
+                SL_POINTS * point
+            )
+
+            tp = price - (
+                tp_points * point
+            )
 
         return (
             round(sl, 2),
             round(tp, 2),
         )
 
-    def _close_position(self, position) -> None:
+    def _close_position(
+        self,
+        position,
+    ) -> None:
 
         print("=" * 60)
         print("CLOSE POSITION")
-        print("TICKET :", position.ticket)
-        print("SYMBOL :", position.symbol)
-        print("MAGIC  :", position.magic)
-        print("VOLUME :", position.volume)
+        print(
+            "TICKET :",
+            position.ticket,
+        )
+        print(
+            "SYMBOL :",
+            position.symbol,
+        )
+        print(
+            "MAGIC  :",
+            position.magic,
+        )
+        print(
+            "VOLUME :",
+            position.volume,
+        )
         print("=" * 60)
 
-        tick = mt5.symbol_info_tick(position.symbol)
+        tick = mt5.symbol_info_tick(
+            position.symbol
+        )
 
         if tick is None:
-            print("NO TICK")
+
+            print(
+                "NO TICK"
+            )
+
             return
 
         request = {
@@ -210,12 +378,14 @@ class TradeExecutor:
             "volume": position.volume,
             "type": (
                 mt5.ORDER_TYPE_SELL
-                if position.type == mt5.ORDER_TYPE_BUY
+                if position.type
+                == mt5.ORDER_TYPE_BUY
                 else mt5.ORDER_TYPE_BUY
             ),
             "price": (
                 tick.bid
-                if position.type == mt5.ORDER_TYPE_BUY
+                if position.type
+                == mt5.ORDER_TYPE_BUY
                 else tick.ask
             ),
             "deviation": DEVIATION,
@@ -229,17 +399,45 @@ class TradeExecutor:
 
         result = mt5.order_send(request)
 
-        print("CLOSE RESULT :", result)
+        print(
+            "CLOSE RESULT :",
+            result,
+        )
 
         if result is None:
-            print("ORDER SEND NONE")
-            print(mt5.last_error())
+
+            print(
+                "ORDER SEND NONE"
+            )
+
+            print(
+                mt5.last_error()
+            )
+
             return
 
-        print("RETCODE :", result.retcode)
-        print("COMMENT :", result.comment)
+        print(
+            "RETCODE :",
+            result.retcode,
+        )
 
-        if result.retcode == mt5.TRADE_RETCODE_DONE:
-            print("CLOSE SUCCESS :", position.ticket)
+        print(
+            "COMMENT :",
+            result.comment,
+        )
+
+        if (
+            result.retcode
+            == mt5.TRADE_RETCODE_DONE
+        ):
+
+            print(
+                "CLOSE SUCCESS :",
+                position.ticket,
+            )
+
         else:
-            print("CLOSE FAILED")
+
+            print(
+                "CLOSE FAILED"
+            )

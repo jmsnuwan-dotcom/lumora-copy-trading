@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from server.database.models import Connection
 from server.schemas.connection import ConnectionCreate
-
+from server.repositories.subscription_repository import SubscriptionRepository
 
 class ConnectionService:
 
@@ -13,6 +13,16 @@ class ConnectionService:
         db: Session,
         request: ConnectionCreate,
     ) -> Connection:
+
+        subscription = SubscriptionRepository.get_active_by_user(
+            db=db,
+            user_id=request.user_id,
+        )
+
+        if not subscription:
+            raise ValueError(
+                "No active subscription."
+            )
 
         connection = (
             db.query(Connection)

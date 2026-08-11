@@ -1,36 +1,52 @@
 import asyncio
 
-from client.api.connection_api import ConnectionAPI
 from client.api.heartbeat_api import HeartbeatAPI
 from client.mt5.mt5_client import MT5Client
-from client.mt5.symbol_loader import SymbolLoader
-#from client.mt5.trade_monitor import TradeMonitor
 from client.websocket.websocket_client import WebSocketClient
 
 
-def start_client(token: str):
+def start_client(
+    token: str,
+    mt5_login: int,
+    mt5_password: str,
+    mt5_server: str,
+):
 
     print("START_CLIENT 1")
 
-    if not MT5Client.connect():
+    print("MT5 LOGIN :", mt5_login)
+    print("MT5 SERVER:", mt5_server)
+
+    print("CONNECTING MT5")
+
+    connected = MT5Client.connect(
+        login=mt5_login,
+        password=mt5_password,
+        server=mt5_server,
+    )
+
+    if not connected:
+
         print("MT5 Connection Failed")
+
         return
 
     print("START_CLIENT 2")
     print("MT5 Connected")
 
-    SymbolLoader.get_symbols()
+    HeartbeatAPI.send(
+        token
+    )
 
     print("START_CLIENT 3")
 
-    ConnectionAPI.save(token)
+    asyncio.run(
+        WebSocketClient(
+            token=token,
+            mt5_login=mt5_login,
+            mt5_password=mt5_password,
+            mt5_server=mt5_server,
+        ).start()
+    )
 
     print("START_CLIENT 4")
-
-    HeartbeatAPI.send(token)
-
-    print("START_CLIENT 5")
-
-    asyncio.run(
-        WebSocketClient(token).start()
-    )

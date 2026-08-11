@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 import uuid
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
@@ -53,12 +54,45 @@ class Subscription(Base):
         nullable=False,
     )
 
+    payment_status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="NOT_PAID",
+    )
+
+    payment_slip: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    payment_submitted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     start_date: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
 
     end_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    is_trial: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="0",
+    )
+
+    trial_started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    trial_ends_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )

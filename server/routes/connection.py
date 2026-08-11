@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from server.database.db import get_db
@@ -8,8 +8,8 @@ from server.schemas.connection import (
     ConnectionResponse,
 )
 from server.services.connection_service import ConnectionService
-from server.utils.dependencies import get_current_user
-from fastapi import HTTPException
+from server.utils.dependencies import require_active_subscription
+
 
 router = APIRouter(
     prefix="/connections",
@@ -24,14 +24,24 @@ router = APIRouter(
 def save_connection(
     request: ConnectionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_active_subscription
+    ),
 ):
     request.user_id = current_user.id
 
-    return ConnectionService.save(
-        db=db,
-        request=request,
-    )
+    try:
+        return ConnectionService.save(
+            db=db,
+            request=request,
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=403,
+            detail=str(e),
+        )
+
 
 @router.get(
     "/me",
@@ -39,9 +49,10 @@ def save_connection(
 )
 def get_my_connection(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_active_subscription
+    ),
 ):
-
     connection = ConnectionService.get_by_user(
         db=db,
         user_id=current_user.id,
