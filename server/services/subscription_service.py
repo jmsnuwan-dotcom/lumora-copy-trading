@@ -87,7 +87,16 @@ class SubscriptionService:
             )
             .filter(
                 Subscription.user_id == user_id,
-                Subscription.status == "ACTIVE",
+                Subscription.status.in_(
+                    [
+                        "PENDING",
+                        "APPROVED",
+                        "ACTIVE",
+                    ]
+                ),
+            )
+            .order_by(
+                Subscription.id.desc()
             )
             .first()
         )

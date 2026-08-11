@@ -10,9 +10,10 @@ from PySide6.QtWidgets import (
 )
 
 from client.api.dashboard_api import DashboardAPI
+from client.api.subscription_api import SubscriptionAPI
 from client.api.user_api import UserAPI
 from client.ui.windows.mt5_setup_window import MT5SetupWindow
-from client.services.client_service import ClientService
+from client.ui.windows.payment_window import PaymentWindow
 
 
 class DashboardWindow(QMainWindow):
@@ -21,8 +22,8 @@ class DashboardWindow(QMainWindow):
         super().__init__()
 
         self.token = token
-        self.login_window = None
         self.mt5_setup_window = None
+        self.payment_window = None
 
         self.redirected_to_payment = False
         self.trial_ends_at = None
@@ -54,10 +55,7 @@ class DashboardWindow(QMainWindow):
         self.trial = QLabel("Trial : -")
         self.countdown = QLabel("")
 
-        self.mt5_button = QPushButton(
-            "MT5 Setup"
-        )
-
+        self.mt5_button = QPushButton("MT5 Setup")
         self.signal_button = QPushButton()
 
         self.mt5_button.clicked.connect(
@@ -71,9 +69,7 @@ class DashboardWindow(QMainWindow):
         layout.addWidget(self.name)
         layout.addWidget(self.email)
         layout.addWidget(self.status)
-        layout.addWidget(
-            self.connection_status
-        )
+        layout.addWidget(self.connection_status)
 
         layout.addWidget(self.package)
         layout.addWidget(self.plan)
@@ -84,13 +80,8 @@ class DashboardWindow(QMainWindow):
         layout.addWidget(self.trial)
         layout.addWidget(self.countdown)
 
-        layout.addWidget(
-            self.mt5_button
-        )
-
-        layout.addWidget(
-            self.signal_button
-        )
+        layout.addWidget(self.mt5_button)
+        layout.addWidget(self.signal_button)
 
         self.setCentralWidget(page)
 
@@ -115,7 +106,7 @@ class DashboardWindow(QMainWindow):
             )
 
         except PermissionError:
-            self.logout_after_trial()
+            self.open_existing_payment()
             return
 
         if data is None:
@@ -214,6 +205,77 @@ class DashboardWindow(QMainWindow):
 
         self.load_dashboard()
 
+    def open_existing_payment(self):
+
+        subscription = (
+            SubscriptionAPI.get_my_subscription(
+                self.token
+            )
+        )
+
+        if subscription is None:
+            return
+
+        package = subscription.get(
+            "package"
+        )
+
+        plan = subscription.get(
+            "plan"
+        )
+
+        if not package or not plan:
+            return
+
+        package_name = package.get(
+            "name",
+            "",
+        )
+
+        plan_name = plan.get(
+            "name",
+            "",
+        )
+
+        duration_days = plan.get(
+            "duration_days"
+        )
+
+        price = plan.get(
+            "price",
+            0,
+        )
+
+        if duration_days is None:
+            duration = "Lifetime"
+
+        elif duration_days == 1:
+            duration = "1 Day"
+
+        else:
+            duration = (
+                f"{duration_days} Days"
+            )
+
+        self.redirected_to_payment = True
+
+        self.refresh_timer.stop()
+        self.countdown_timer.stop()
+
+        self.payment_window = PaymentWindow(
+            token=self.token,
+            package_name=package_name,
+            plan_name=plan_name,
+            duration=duration,
+            final_price=price,
+        )
+
+        self.payment_window.show()
+        self.payment_window.raise_()
+        self.payment_window.activateWindow()
+
+        self.hide()
+
     def open_mt5_setup(self):
 
         self.mt5_setup_window = (
@@ -271,10 +333,14 @@ class DashboardWindow(QMainWindow):
             return
 
         hours = remaining_seconds // 3600
+
         minutes = (
             remaining_seconds % 3600
         ) // 60
-        seconds = remaining_seconds % 60
+
+        seconds = (
+            remaining_seconds % 60
+        )
 
         self.countdown.setText(
             f"Trial Remaining : "
@@ -304,31 +370,11 @@ class DashboardWindow(QMainWindow):
 
             return parsed
 
-        except (TypeError, ValueError):
+        except (
+            TypeError,
+            ValueError,
+        ):
             return None
-
-    def logout_after_trial(self):
-
-        from client.ui.windows.package_selection_window import (
-            PackageSelectionWindow,
-        )
-
-        self.redirected_to_payment = True
-
-        self.refresh_timer.stop()
-        self.countdown_timer.stop()
-
-        self.package_selection_window = (
-            PackageSelectionWindow(
-                token=self.token,
-            )
-        )
-
-        self.package_selection_window.show()
-        self.package_selection_window.raise_()
-        self.package_selection_window.activateWindow()
-
-        self.hide()
 
     def toggle_signals(self):
 

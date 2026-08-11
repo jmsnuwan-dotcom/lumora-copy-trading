@@ -36,7 +36,6 @@ class DashboardService:
                 Subscription.user_id == user_id,
                 Subscription.status.in_(
                     [
-                        "PENDING",
                         "APPROVED",
                         "ACTIVE",
                     ]
