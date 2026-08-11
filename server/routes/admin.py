@@ -146,27 +146,33 @@ def view_payment_slip(
     )
 
 
-@router.post(
-    "/payments/{subscription_id}/approve",
+@router.get(
+    "/me",
     response_model=SubscriptionResponse,
 )
-def approve_payment(
-    subscription_id: int,
+def get_my_subscription(
     db: Session = Depends(get_db),
-    admin: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
 ):
-    try:
-        return SubscriptionService.approve_payment(
-            db=db,
-            subscription_id=subscription_id,
-            admin_id=admin.id,
+
+    subscription = (
+        db.query(Subscription)
+        .filter(
+            Subscription.user_id == current_user.id,
+        )
+        .order_by(
+            Subscription.id.desc()
+        )
+        .first()
+    )
+
+    if subscription is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No subscription found.",
         )
 
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e),
-        )
+    return subscription
 
 @router.post(
     "/trial/{subscription_id}",
