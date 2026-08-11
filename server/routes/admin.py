@@ -1,26 +1,31 @@
-from fastapi import APIRouter, Depends, HTTPException
+from pathlib import Path
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+)
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from server.database.db import get_db
 from server.database.models.user import User
+from server.database.models.subscription import Subscription
 from server.schemas.subscription import SubscriptionResponse
-from server.services.subscription_service import SubscriptionService
-from server.utils.dependencies import get_current_user
 from server.schemas.payment_settings import (
     PaymentSettingsResponse,
     PaymentSettingsUpdate,
 )
+from server.schemas.admin_client import AdminClientResponse
+from server.services.subscription_service import (
+    SubscriptionService,
+)
 from server.services.payment_settings_service import (
     PaymentSettingsService,
 )
-from server.schemas.admin_client import AdminClientResponse
 from server.services.user_service import UserService
-from pathlib import Path
-from fastapi.responses import FileResponse
-from pathlib import Path
-from fastapi.responses import FileResponse
+from server.utils.dependencies import get_current_user
 
-from server.database.models.subscription import Subscription
 
 router = APIRouter(
     prefix="/admin",
@@ -47,7 +52,9 @@ def get_pending_payments(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    subscriptions = SubscriptionService.get_pending_payments(db)
+    subscriptions = (
+        SubscriptionService.get_pending_payments(db)
+    )
 
     return [
         {
@@ -62,10 +69,36 @@ def get_pending_payments(
             "amount": subscription.plan.price,
             "payment_status": subscription.payment_status,
             "payment_slip": subscription.payment_slip,
-            "payment_submitted_at": subscription.payment_submitted_at,
+            "payment_submitted_at": (
+                subscription.payment_submitted_at
+            ),
         }
         for subscription in subscriptions
     ]
+
+
+@router.post(
+    "/payments/{subscription_id}/approve",
+    response_model=SubscriptionResponse,
+)
+def approve_payment(
+    subscription_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    try:
+        return SubscriptionService.approve_payment(
+            db=db,
+            subscription_id=subscription_id,
+            admin_id=admin.id,
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
+
 
 @router.get(
     "/clients",
@@ -75,7 +108,9 @@ def get_admin_clients(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    subscriptions = SubscriptionService.get_admin_clients(db)
+    subscriptions = (
+        SubscriptionService.get_admin_clients(db)
+    )
 
     return [
         {
@@ -96,14 +131,21 @@ def get_admin_clients(
                 if subscription.plan
                 else None
             ),
-            "payment_status": subscription.payment_status,
+            "payment_status": (
+                subscription.payment_status
+            ),
             "is_trial": subscription.is_trial,
-            "trial_ends_at": subscription.trial_ends_at,
-            "start_date": subscription.start_date,
+            "trial_ends_at": (
+                subscription.trial_ends_at
+            ),
+            "start_date": (
+                subscription.start_date
+            ),
             "end_date": subscription.end_date,
         }
         for subscription in subscriptions
     ]
+
 
 @router.get(
     "/payments/{subscription_id}/slip",
@@ -113,11 +155,9 @@ def view_payment_slip(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    subscription = (
-        SubscriptionService.get_by_id(
-            db=db,
-            subscription_id=subscription_id,
-        )
+    subscription = SubscriptionService.get_by_id(
+        db=db,
+        subscription_id=subscription_id,
     )
 
     if not subscription:
@@ -132,7 +172,9 @@ def view_payment_slip(
             detail="Payment slip not found.",
         )
 
-    file_path = Path(subscription.payment_slip)
+    file_path = Path(
+        subscription.payment_slip
+    )
 
     if not file_path.exists():
         raise HTTPException(
@@ -154,7 +196,6 @@ def get_my_subscription(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-
     subscription = (
         db.query(Subscription)
         .filter(
@@ -173,6 +214,7 @@ def get_my_subscription(
         )
 
     return subscription
+
 
 @router.post(
     "/trial/{subscription_id}",
@@ -196,6 +238,7 @@ def give_trial(
             detail=str(e),
         )
 
+
 @router.post(
     "/package/{subscription_id}/activate",
     response_model=SubscriptionResponse,
@@ -218,7 +261,10 @@ def activate_package(
             detail=str(e),
         )
 
-@router.put("/clients/{user_id}/active")
+
+@router.put(
+    "/clients/{user_id}/active"
+)
 def toggle_client_active(
     user_id: int,
     db: Session = Depends(get_db),
@@ -239,6 +285,7 @@ def toggle_client_active(
             status_code=404,
             detail=str(e),
         )
+
 
 @router.get(
     "/payment-settings",
@@ -264,4 +311,3 @@ def update_payment_settings(
         db=db,
         request=request,
     )
-
