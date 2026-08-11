@@ -120,22 +120,28 @@ class DashboardService:
 
         remaining_days = None
 
-        if subscription.end_date:
-            now = datetime.now(UTC)
+        # Trial is separate from the normal paid package.
+        # Do not show paid package remaining days during trial.
+        if subscription.is_trial:
+            remaining_days = None
 
-            end_date = subscription.end_date
+        else:
+            if subscription.end_date:
+                now = datetime.now(UTC)
 
-            if end_date.tzinfo is None:
-                end_date = end_date.replace(
-                    tzinfo=UTC
-                )
+                end_date = subscription.end_date
 
-            remaining_days = (
-                end_date - now
-            ).days
+                if end_date.tzinfo is None:
+                    end_date = end_date.replace(
+                        tzinfo=UTC
+                    )
 
-            if remaining_days < 0:
-                remaining_days = 0
+                remaining_days = (
+                    end_date - now
+                ).days
+
+                if remaining_days < 0:
+                    remaining_days = 0
 
         signals_enabled = False
 
