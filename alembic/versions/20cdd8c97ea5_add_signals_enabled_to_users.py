@@ -18,6 +18,18 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Upgrade schema."""
+
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    columns = {
+        column["name"]
+        for column in inspector.get_columns("users")
+    }
+
+    if "signals_enabled" in columns:
+        return
 
     op.add_column(
         "users",
