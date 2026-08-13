@@ -25,6 +25,7 @@ class PackageService:
             name=request.name,
             lot_size=request.lot_size,
             trades_per_signal=request.trades_per_signal,
+            price=request.price,
         )
 
         db.add(package)
@@ -63,6 +64,7 @@ class PackageService:
         package.name = request.name
         package.lot_size = request.lot_size
         package.trades_per_signal = request.trades_per_signal
+        package.price = request.price
 
         db.commit()
         db.refresh(package)
