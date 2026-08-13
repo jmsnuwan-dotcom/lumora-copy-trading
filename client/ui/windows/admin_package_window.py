@@ -343,36 +343,55 @@ class AdminPackageWindow(QMainWindow):
             header
         )
 
-        # Scroll area
+        # Package rows
         self.package_layout = QVBoxLayout()
         self.package_layout.setSpacing(8)
+        self.package_layout.setContentsMargins(
+            0,
+            0,
+            0,
+            0,
+        )
 
-        container = QWidget()
-        container.setLayout(
+        list_layout.addLayout(
             self.package_layout
-        )
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(
-            True
-        )
-        scroll.setWidget(
-            container
-        )
-        scroll.setFrameShape(
-            QScrollArea.NoFrame
-        )
-
-        list_layout.addWidget(
-            scroll
         )
 
         layout.addWidget(
             list_box
         )
 
+        # ======================================================
+        # FULL PAGE SCROLL
+        # ======================================================
+
+        page_content = QWidget()
+        page_content.setObjectName(
+            "pageContent"
+        )
+        page_content.setLayout(
+            layout
+        )
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(
+            True
+        )
+        scroll.setFrameShape(
+            QScrollArea.NoFrame
+        )
+        scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+        scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+        scroll.setWidget(
+            page_content
+        )
+
         self.setCentralWidget(
-            page
+            scroll
         )
 
         self.update_button.setEnabled(
@@ -1015,8 +1034,50 @@ class AdminPackageWindow(QMainWindow):
         }
 
         QScrollArea {
-            background-color: transparent;
+            background-color: #05050F;
             border: none;
+        }
+
+        QScrollArea > QWidget {
+            background-color: #05050F;
+            border: none;
+        }
+
+        QScrollArea > QWidget > QWidget {
+            background-color: #05050F;
+            border: none;
+        }
+
+        QWidget#pageContent {
+            background-color: #05050F;
+        }
+
+        QScrollBar:vertical {
+            background-color: #070711;
+            width: 10px;
+            margin: 4px 0 4px 0;
+            border: none;
+        }
+
+        QScrollBar::handle:vertical {
+            background-color: #292943;
+            border-radius: 5px;
+            min-height: 40px;
+        }
+
+        QScrollBar::handle:vertical:hover {
+            background-color: #713D9F;
+        }
+
+        QScrollBar::add-line:vertical,
+        QScrollBar::sub-line:vertical {
+            height: 0px;
+            background: transparent;
+        }
+
+        QScrollBar::add-page:vertical,
+        QScrollBar::sub-page:vertical {
+            background: transparent;
         }
 
         QMessageBox {

@@ -1,5 +1,6 @@
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
+    QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -196,16 +197,16 @@ class AdminClientWindow(QMainWindow):
         )
 
         # ======================================================
-        # CLIENT LIST CONTAINER
+        # CLIENT LIST PANEL
         # ======================================================
 
-        clients_panel = QWidget()
+        clients_panel = QFrame()
 
         clients_panel.setStyleSheet(
             """
-            QWidget {
+            QFrame {
                 background: #080811;
-                border: 1px solid #292943;
+                border: 1px solid #28283f;
                 border-radius: 14px;
             }
             """
@@ -223,14 +224,14 @@ class AdminClientWindow(QMainWindow):
         )
 
         clients_panel_layout.setSpacing(
-            12
+            10
         )
 
-        panel_title = QLabel(
+        clients_title = QLabel(
             "REGISTERED CLIENTS"
         )
 
-        panel_title.setStyleSheet(
+        clients_title.setStyleSheet(
             """
             QLabel {
                 color: #b967ff;
@@ -243,86 +244,11 @@ class AdminClientWindow(QMainWindow):
         )
 
         clients_panel_layout.addWidget(
-            panel_title
+            clients_title
         )
 
         # ------------------------------------------------------
-        # Column Header
-        # ------------------------------------------------------
-
-        column_header = QWidget()
-
-        column_header.setStyleSheet(
-            """
-            QWidget {
-                background: #0d0d19;
-                border: 1px solid #222238;
-                border-radius: 8px;
-            }
-            """
-        )
-
-        column_layout = QHBoxLayout(
-            column_header
-        )
-
-        column_layout.setContentsMargins(
-            14,
-            8,
-            14,
-            8,
-        )
-
-        client_header = QLabel(
-            "CLIENT"
-        )
-
-        client_header.setMinimumWidth(
-            330
-        )
-
-        client_header.setStyleSheet(
-            """
-            QLabel {
-                color: #777790;
-                font-size: 10px;
-                font-weight: 800;
-                border: none;
-            }
-            """
-        )
-
-        actions_header = QLabel(
-            "ACTIONS"
-        )
-
-        actions_header.setStyleSheet(
-            """
-            QLabel {
-                color: #777790;
-                font-size: 10px;
-                font-weight: 800;
-                border: none;
-            }
-            """
-        )
-
-        column_layout.addWidget(
-            client_header
-        )
-
-        column_layout.addStretch()
-
-        column_layout.addWidget(
-            actions_header
-        )
-
-        clients_panel_layout.addWidget(
-            column_header
-        )
-
-        # ------------------------------------------------------
-        # Scroll
+        # CLIENT LIST
         # ------------------------------------------------------
 
         self.client_layout = QVBoxLayout()
@@ -338,20 +264,17 @@ class AdminClientWindow(QMainWindow):
             0,
         )
 
-        container = QWidget()
-
-        container.setLayout(
+        clients_panel_layout.addLayout(
             self.client_layout
         )
 
-        container.setStyleSheet(
-            """
-            QWidget {
-                background: transparent;
-                border: none;
-            }
-            """
+        layout.addWidget(
+            clients_panel
         )
+
+        # ======================================================
+        # FULL PAGE SCROLL
+        # ======================================================
 
         scroll = QScrollArea()
 
@@ -359,21 +282,67 @@ class AdminClientWindow(QMainWindow):
             True
         )
 
+        scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        scroll.setFrameShape(
+            QFrame.NoFrame
+        )
+
+        scroll.setStyleSheet(
+            """
+            QScrollArea {
+                background: #05050d;
+                border: none;
+            }
+
+            QScrollArea > QWidget {
+                background: #05050d;
+            }
+
+            QScrollArea > QWidget > QWidget {
+                background: #05050d;
+            }
+
+            QScrollBar:vertical {
+                background: #070711;
+                width: 10px;
+                margin: 0px;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #292943;
+                border-radius: 5px;
+                min-height: 40px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #713d9f;
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: transparent;
+            }
+            """
+        )
+
         scroll.setWidget(
-            container
-        )
-
-        clients_panel_layout.addWidget(
-            scroll
-        )
-
-        layout.addWidget(
-            clients_panel,
-            1,
+            page
         )
 
         self.setCentralWidget(
-            page
+            scroll
         )
 
     # ==========================================================

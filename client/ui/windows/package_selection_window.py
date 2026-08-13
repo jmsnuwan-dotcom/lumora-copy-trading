@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QHBoxLayout,
+    QFrame,
+    QScrollArea,
     QGraphicsDropShadowEffect,
 )
 
@@ -660,8 +662,39 @@ class PackageSelectionWindow(QMainWindow):
             Qt.AlignCenter,
         )
 
-        self.setCentralWidget(
+        # ======================================================
+        # FULL PAGE SCROLL
+        # ======================================================
+
+        page.setMinimumSize(
+            850,
+            560,
+        )
+
+        scroll = QScrollArea()
+
+        scroll.setWidgetResizable(
+            True
+        )
+
+        scroll.setFrameShape(
+            QFrame.NoFrame
+        )
+
+        scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        scroll.setWidget(
             page
+        )
+
+        self.setCentralWidget(
+            scroll
         )
 
         self.apply_style()
@@ -692,6 +725,49 @@ class PackageSelectionWindow(QMainWindow):
             """
             QMainWindow {
                 background: #03040A;
+            }
+
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+
+            QScrollArea > QWidget {
+                background: transparent;
+                border: none;
+            }
+
+            QScrollArea > QWidget > QWidget {
+                background: transparent;
+                border: none;
+            }
+
+            QScrollBar:vertical {
+                background: #070711;
+                width: 10px;
+                margin: 4px 0 4px 0;
+                border: none;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #292943;
+                border-radius: 5px;
+                min-height: 40px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #713D9F;
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0px;
+                background: transparent;
+            }
+
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: transparent;
             }
 
             QWidget#packageCard {

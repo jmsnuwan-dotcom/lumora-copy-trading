@@ -59,6 +59,7 @@ exe = EXE(
     [],
 
     name="LumoraClient",
+    icon="LumoraIcon.ico",
 
     debug=False,
     bootloader_ignore_signals=False,

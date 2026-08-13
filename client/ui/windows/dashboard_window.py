@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -670,6 +671,75 @@ class DashboardWindow(QMainWindow):
             package_card
         )
 
+        # ------------------------------------------------------
+        # TRIAL STATUS CARD
+        # ------------------------------------------------------
+
+        trial_card = QFrame()
+
+        trial_card.setObjectName(
+            "trialCard"
+        )
+
+        trial_layout = QVBoxLayout(
+            trial_card
+        )
+
+        trial_layout.setContentsMargins(
+            24,
+            22,
+            24,
+            22,
+        )
+
+        trial_layout.setSpacing(
+            12
+        )
+
+        trial_title = QLabel(
+            "TRIAL STATUS"
+        )
+
+        trial_title.setObjectName(
+            "sectionTitle"
+        )
+
+        self.trial = QLabel(
+            "Trial : -"
+        )
+
+        self.trial.setObjectName(
+            "trialValue"
+        )
+
+        self.countdown = QLabel(
+            ""
+        )
+
+        self.countdown.setObjectName(
+            "countdown"
+        )
+
+        self.countdown.setAlignment(
+            Qt.AlignCenter
+        )
+
+        trial_layout.addWidget(
+            trial_title
+        )
+
+        trial_layout.addWidget(
+            self.trial
+        )
+
+        trial_layout.addWidget(
+            self.countdown
+        )
+
+        top_cards.addWidget(
+            trial_card
+        )
+
         main_layout.addLayout(
             top_cards
         )
@@ -718,75 +788,6 @@ class DashboardWindow(QMainWindow):
         )
 
         # ======================================================
-        # TRIAL CARD
-        # ======================================================
-
-        trial_card = QFrame()
-
-        trial_card.setObjectName(
-            "trialCard"
-        )
-
-        trial_layout = QVBoxLayout(
-            trial_card
-        )
-
-        trial_layout.setContentsMargins(
-            24,
-            20,
-            24,
-            20,
-        )
-
-        trial_layout.setSpacing(
-            8
-        )
-
-        trial_title = QLabel(
-            "TRIAL STATUS"
-        )
-
-        trial_title.setObjectName(
-            "sectionTitle"
-        )
-
-        self.trial = QLabel(
-            "Trial : -"
-        )
-
-        self.trial.setObjectName(
-            "trialValue"
-        )
-
-        self.countdown = QLabel(
-            ""
-        )
-
-        self.countdown.setObjectName(
-            "countdown"
-        )
-
-        self.countdown.setAlignment(
-            Qt.AlignCenter
-        )
-
-        trial_layout.addWidget(
-            trial_title
-        )
-
-        trial_layout.addWidget(
-            self.trial
-        )
-
-        trial_layout.addWidget(
-            self.countdown
-        )
-
-        main_layout.addWidget(
-            trial_card
-        )
-
-        # ======================================================
         # ACTION BUTTONS
         # ======================================================
 
@@ -832,9 +833,36 @@ class DashboardWindow(QMainWindow):
             actions
         )
 
-        self.setCentralWidget(
+        # ======================================================
+        # SCROLL AREA
+        # ======================================================
+
+        scroll = QScrollArea()
+
+        scroll.setWidgetResizable(
+            True
+        )
+
+        scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        scroll.setFrameShape(
+            QFrame.NoFrame
+        )
+
+        scroll.setWidget(
             page
         )
+
+        self.setCentralWidget(
+            scroll
+        )
+
 
         # ======================================================
         # STYLE

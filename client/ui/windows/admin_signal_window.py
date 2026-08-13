@@ -1,4 +1,4 @@
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import (
     QFormLayout,
     QGroupBox,
@@ -271,7 +271,38 @@ class AdminSignalWindow(QMainWindow):
             history_box
         )
 
-        self.setCentralWidget(page)
+        # =====================================================
+        # FULL PAGE SCROLL
+        # =====================================================
+
+        page_content = QWidget()
+        page_content.setObjectName(
+            "pageContent"
+        )
+        page_content.setLayout(
+            layout
+        )
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(
+            True
+        )
+        scroll.setFrameShape(
+            QScrollArea.NoFrame
+        )
+        scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+        scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+        scroll.setWidget(
+            page_content
+        )
+
+        self.setCentralWidget(
+            scroll
+        )
 
         # =====================================================
         # STYLE
@@ -279,7 +310,22 @@ class AdminSignalWindow(QMainWindow):
 
         self.setStyleSheet(
             """
-            QWidget#page {
+            QScrollArea {
+                background: #05050d;
+                border: none;
+            }
+
+            QScrollArea > QWidget {
+                background: #05050d;
+                border: none;
+            }
+
+            QScrollArea > QWidget > QWidget {
+                background: #05050d;
+                border: none;
+            }
+
+            QWidget#pageContent {
                 background: #05050d;
                 color: #f5f5f5;
                 font-family: "Segoe UI";
@@ -408,11 +454,6 @@ class AdminSignalWindow(QMainWindow):
                 color: #dddded;
             }
 
-            QScrollArea {
-                background: #080811;
-                border: none;
-            }
-
             QScrollArea QWidget {
                 background: #080811;
             }
@@ -424,29 +465,52 @@ class AdminSignalWindow(QMainWindow):
             QScrollBar:horizontal {
                 background: #080811;
                 height: 8px;
-                border-radius: 4px;
+                border: none;
             }
 
             QScrollBar::add-line:horizontal,
             QScrollBar::sub-line:horizontal {
-                background: #080811;
+                width: 0px;
+                background: transparent;
                 border: none;
             }
 
             QScrollBar::handle:horizontal {
                 background: #343450;
                 border-radius: 4px;
+                min-width: 30px;
+            }
+
+            QScrollBar::handle:horizontal:hover {
+                background: #713d9f;
             }
 
             QScrollBar:vertical {
-                background: #07070f;
-                width: 8px;
-                border-radius: 4px;
+                background: #070711;
+                width: 10px;
+                margin: 4px 0 4px 0;
+                border: none;
             }
 
             QScrollBar::handle:vertical {
-                background: #343450;
-                border-radius: 4px;
+                background: #292943;
+                border-radius: 5px;
+                min-height: 40px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #713d9f;
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0px;
+                background: transparent;
+            }
+
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: transparent;
             }
             """
         )

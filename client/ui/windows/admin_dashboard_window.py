@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QComboBox,
+    QFrame,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -9,10 +10,10 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
-
 from client.api.admin_api import AdminAPI
 
 from client.ui.windows.admin_client_window import (
@@ -714,14 +715,78 @@ class AdminDashboardWindow(QMainWindow):
             sidebar
         )
 
-        main_layout.addWidget(
+        # ------------------------------------------------------
+        # SCROLLABLE CONTENT
+        # ------------------------------------------------------
+
+        content_scroll = QScrollArea()
+
+        content_scroll.setWidgetResizable(
+            True
+        )
+
+        content_scroll.setStyleSheet(
+            """
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+
+            QScrollArea > QWidget > QWidget {
+                background: transparent;
+            }
+
+            QScrollBar:vertical {
+                background: #080811;
+                width: 10px;
+                margin: 0px;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #292943;
+                border-radius: 5px;
+                min-height: 40px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #8f42ff;
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: transparent;
+            }
+            """
+        )
+
+        content_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        content_scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        content_scroll.setFrameShape(
+            QFrame.NoFrame
+        )
+
+        content_scroll.setWidget(
             content
+        )
+
+        main_layout.addWidget(
+            content_scroll
         )
 
         self.setCentralWidget(
             page
         )
-
     # ==========================================================
     # UI HELPERS
     # ==========================================================

@@ -1,5 +1,4 @@
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFileDialog,
     QLabel,
@@ -11,7 +10,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFrame,
     QScrollArea,
-    QGraphicsDropShadowEffect,
 )
 
 from client.api.payment_api import PaymentAPI
@@ -447,11 +445,40 @@ class PaymentWindow(QMainWindow):
         )
 
         # ==========================================
+        # FULL PAGE SCROLL
+        # ==========================================
+
+        page_content = QWidget()
+        page_content.setObjectName(
+            "pageContent"
+        )
+        page_content.setLayout(
+            main_layout
+        )
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(
+            True
+        )
+        scroll.setFrameShape(
+            QFrame.NoFrame
+        )
+        scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+        scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+        scroll.setWidget(
+            page_content
+        )
+
+        # ==========================================
         # STYLE
         # ==========================================
 
         self.setCentralWidget(
-            page
+            scroll
         )
 
         self.apply_style()
@@ -460,9 +487,56 @@ class PaymentWindow(QMainWindow):
 
         self.setStyleSheet(
             """
-            QMainWindow,
-            QWidget#paymentPage {
+            QMainWindow {
                 background: #03040A;
+            }
+
+            QScrollArea {
+                background: #03040A;
+                border: none;
+            }
+
+            QScrollArea > QWidget {
+                background: #03040A;
+                border: none;
+            }
+
+            QScrollArea > QWidget > QWidget {
+                background: #03040A;
+                border: none;
+            }
+
+            QWidget#pageContent {
+                background: #03040A;
+                color: #FFFFFF;
+            }
+
+            QScrollBar:vertical {
+                background: #070711;
+                width: 10px;
+                margin: 4px 0 4px 0;
+                border: none;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #292943;
+                border-radius: 5px;
+                min-height: 40px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #713d9f;
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0px;
+                background: transparent;
+            }
+
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: transparent;
             }
 
             QLabel#title {
