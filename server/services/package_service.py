@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from server.database.models import Package
+from server.database.models import Package, Plan
 from server.schemas.package import PackageCreate
 
 
@@ -25,10 +25,31 @@ class PackageService:
             name=request.name,
             lot_size=request.lot_size,
             trades_per_signal=request.trades_per_signal,
-            price=request.price,
         )
 
         db.add(package)
+        db.commit()
+        db.refresh(package)
+
+        monthly_plan = Plan(
+            package_id=package.id,
+            name="Monthly",
+            duration_days=30,
+            price=request.monthly_price,
+        )
+
+        lifetime_plan = Plan(
+            package_id=package.id,
+            name="Lifetime",
+            duration_days=None,
+            price=request.lifetime_price,
+        )
+
+        db.add_all([
+            monthly_plan,
+            lifetime_plan,
+        ])
+
         db.commit()
         db.refresh(package)
 
@@ -64,7 +85,30 @@ class PackageService:
         package.name = request.name
         package.lot_size = request.lot_size
         package.trades_per_signal = request.trades_per_signal
-        package.price = request.price
+
+        monthly_plan = (
+            db.query(Plan)
+            .filter(
+                Plan.package_id == package.id,
+                Plan.name == "Monthly",
+            )
+            .first()
+        )
+
+        if monthly_plan:
+            monthly_plan.price = request.monthly_price
+
+        lifetime_plan = (
+            db.query(Plan)
+            .filter(
+                Plan.package_id == package.id,
+                Plan.name == "Lifetime",
+            )
+            .first()
+        )
+
+        if lifetime_plan:
+            lifetime_plan.price = request.lifetime_price
 
         db.commit()
         db.refresh(package)
@@ -105,5 +149,3 @@ class PackageService:
             .filter(Package.id == package_id)
             .first()
         )
-
-    

@@ -24,6 +24,8 @@ class PackageAPI:
         name: str,
         lot_size: float,
         trades_per_signal: int,
+        monthly_price: float,
+        lifetime_price: float,
     ):
 
         response = requests.post(
@@ -35,6 +37,8 @@ class PackageAPI:
                 "name": name,
                 "lot_size": lot_size,
                 "trades_per_signal": trades_per_signal,
+                "monthly_price": monthly_price,
+                "lifetime_price": lifetime_price,
             },
             timeout=10,
         )
@@ -56,6 +60,8 @@ class PackageAPI:
         name: str,
         lot_size: float,
         trades_per_signal: int,
+        monthly_price: float,
+        lifetime_price: float,
     ):
 
         response = requests.put(
@@ -67,6 +73,8 @@ class PackageAPI:
                 "name": name,
                 "lot_size": lot_size,
                 "trades_per_signal": trades_per_signal,
+                "monthly_price": monthly_price,
+                "lifetime_price": lifetime_price,
             },
             timeout=10,
         )
@@ -121,6 +129,30 @@ class PackageAPI:
         return response.json()
 
     @staticmethod
+    def update_plan_price(
+        plan_id: int,
+        price: float,
+    ):
+
+        response = requests.put(
+            f"{API_URL}/plans/price/{plan_id}",
+            json={
+                "price": price,
+            },
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            print(
+                "UPDATE PLAN PRICE ERROR:",
+                response.status_code,
+                response.text,
+            )
+            return None
+
+        return response.json()
+
+    @staticmethod
     def get_my_package(
         token: str,
     ):
@@ -134,6 +166,30 @@ class PackageAPI:
         )
 
         if response.status_code != 200:
+            return None
+
+        return response.json()
+
+    @staticmethod
+    def update_plan_price(
+        plan_id: int,
+        price: float,
+    ):
+
+        response = requests.put(
+            f"{API_URL}/plans/{plan_id}/price",
+            json={
+                "price": price,
+            },
+            timeout=10,
+        )
+
+        if response.status_code != 200:
+            print(
+                "UPDATE PLAN PRICE ERROR:",
+                response.status_code,
+                response.text,
+            )
             return None
 
         return response.json()

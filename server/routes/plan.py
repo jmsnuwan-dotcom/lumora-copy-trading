@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from server.database.db import get_db
 from server.services.plan_service import PlanService
-from server.schemas.plan import PlanResponse
+
 
 router = APIRouter(
     prefix="/plans",
@@ -11,9 +14,12 @@ router = APIRouter(
 )
 
 
+class PlanPriceUpdate(BaseModel):
+    price: Decimal
+
+
 @router.get(
     "/{package_id}",
-    response_model=list[PlanResponse],
 )
 def get_plans(
     package_id: int,
@@ -24,3 +30,26 @@ def get_plans(
         db=db,
         package_id=package_id,
     )
+
+
+@router.put(
+    "/price/{plan_id}",
+)
+def update_plan_price(
+    plan_id: int,
+    request: PlanPriceUpdate,
+    db: Session = Depends(get_db),
+):
+
+    try:
+        return PlanService.update_price(
+            db=db,
+            plan_id=plan_id,
+            price=request.price,
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e),
+        )

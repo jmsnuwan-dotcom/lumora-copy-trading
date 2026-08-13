@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSpinBox,
     QDoubleSpinBox,
+    QComboBox,
     QVBoxLayout,
     QWidget,
 )
@@ -68,6 +69,16 @@ class AdminPackageWindow(QMainWindow):
             0.01
         )
 
+        self.monthly_price = QDoubleSpinBox()
+        self.monthly_price.setDecimals(2)
+        self.monthly_price.setRange(0.00, 1000000.0)
+        self.monthly_price.setValue(0.00)
+
+        self.lifetime_price = QDoubleSpinBox()
+        self.lifetime_price.setDecimals(2)
+        self.lifetime_price.setRange(0.00, 1000000.0)
+        self.lifetime_price.setValue(0.00)
+
         self.trade_copies = QSpinBox()
         self.trade_copies.setRange(
             1,
@@ -93,6 +104,16 @@ class AdminPackageWindow(QMainWindow):
         )
 
         form_box.setLayout(form)
+
+        form.addRow(
+            "Monthly Price ($) :",
+            self.monthly_price,
+        )
+
+        form.addRow(
+            "Lifetime Price ($) :",
+            self.lifetime_price,
+        )
 
         # ==========================================
         # Buttons
@@ -264,6 +285,7 @@ class AdminPackageWindow(QMainWindow):
         info = QLabel(
             f'#{package["id"]}  '
             f'{package["name"]}  |  '
+            f'Price: ${package.get("price", 0)}  |  '
             f'Lot: {package["lot_size"]}  |  '
             f'Copies: '
             f'{package["trades_per_signal"]}'
@@ -316,6 +338,24 @@ class AdminPackageWindow(QMainWindow):
             )
         )
 
+        plans = PackageAPI.get_plans(
+            package["id"]
+        )
+
+        self.plans = plans or []
+
+        for plan in self.plans:
+
+            if plan["name"] == "Monthly":
+                self.monthly_price.setValue(
+                    float(plan["price"])
+                )
+
+            elif plan["name"] == "Lifetime":
+                self.lifetime_price.setValue(
+                    float(plan["price"])
+                )
+
         self.update_button.setEnabled(
             True
         )
@@ -347,6 +387,8 @@ class AdminPackageWindow(QMainWindow):
             name=name,
             lot_size=self.lot_size.value(),
             trades_per_signal=self.trade_copies.value(),
+            monthly_price=self.monthly_price.value(),
+            lifetime_price=self.lifetime_price.value(),
         )
 
         if result is None:
@@ -408,6 +450,8 @@ class AdminPackageWindow(QMainWindow):
             name=name,
             lot_size=self.lot_size.value(),
             trades_per_signal=self.trade_copies.value(),
+            monthly_price=self.monthly_price.value(),
+            lifetime_price=self.lifetime_price.value(),
         )
 
         if result is None:
@@ -419,6 +463,20 @@ class AdminPackageWindow(QMainWindow):
             )
 
             return
+
+        for plan in self.plans:
+
+            if plan["name"] == "Monthly":
+                PackageAPI.update_plan_price(
+                    plan_id=plan["id"],
+                    price=self.monthly_price.value(),
+                )
+
+            elif plan["name"] == "Lifetime":
+                PackageAPI.update_plan_price(
+                    plan_id=plan["id"],
+                    price=self.lifetime_price.value(),
+                )
 
         QMessageBox.information(
             self,
@@ -503,4 +561,7 @@ class AdminPackageWindow(QMainWindow):
 
         self.trade_copies.setValue(
             1
+        )
+        self.price.setValue(
+            0.00
         )
