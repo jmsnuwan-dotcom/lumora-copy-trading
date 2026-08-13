@@ -17,3 +17,6 @@ __pycache__/
 
 # MT5
 MQL5/
+# Build artifacts
+build/
+dist/

@@ -6,8 +6,8 @@ import MetaTrader5 as mt5
 
 from client.config import (
     DEVIATION,
-    SL_POINTS,
-    RR,
+    SL_DISTANCE,
+    TP_DISTANCE,
 )
 from client.mt5.symbol_loader import SymbolLoader
 from client.mt5.symbol_resolver import SymbolResolver
@@ -307,27 +307,15 @@ class TradeExecutor:
         point: float,
     ) -> tuple[float, float]:
 
-        tp_points = SL_POINTS * RR
-
         if order_type == mt5.ORDER_TYPE_BUY:
 
-            sl = price - (
-                SL_POINTS * point
-            )
-
-            tp = price + (
-                tp_points * point
-            )
+            sl = price - SL_DISTANCE
+            tp = price + TP_DISTANCE
 
         else:
 
-            sl = price + (
-                SL_POINTS * point
-            )
-
-            tp = price - (
-                tp_points * point
-            )
+            sl = price + SL_DISTANCE
+            tp = price - TP_DISTANCE
 
         return (
             round(sl, 2),

@@ -4,10 +4,28 @@ from pathlib import Path
 
 class SymbolStorage:
 
-    FILE_PATH = (
-        Path(__file__).resolve().parent
-        / "symbol_config.json"
-    )
+    @classmethod
+    def _file_path(cls) -> Path:
+        """
+        Return a writable location for the user's symbol configuration.
+
+        This works both when running from source and when running
+        as a PyInstaller EXE.
+        """
+
+        app_data = (
+            Path.home()
+            / "AppData"
+            / "Local"
+            / "Lumora"
+        )
+
+        app_data.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        return app_data / "symbol_config.json"
 
     @classmethod
     def save_gold_symbol(
@@ -19,8 +37,11 @@ class SymbolStorage:
             "gold_symbol": symbol,
         }
 
-        cls.FILE_PATH.write_text(
-            json.dumps(data, indent=4),
+        cls._file_path().write_text(
+            json.dumps(
+                data,
+                indent=4,
+            ),
             encoding="utf-8",
         )
 
@@ -29,12 +50,15 @@ class SymbolStorage:
         cls,
     ) -> str | None:
 
-        if not cls.FILE_PATH.exists():
+        file_path = cls._file_path()
+
+        if not file_path.exists():
             return None
 
         try:
+
             data = json.loads(
-                cls.FILE_PATH.read_text(
+                file_path.read_text(
                     encoding="utf-8",
                 )
             )
@@ -47,5 +71,5 @@ class SymbolStorage:
             OSError,
             json.JSONDecodeError,
         ):
+
             return None
-        

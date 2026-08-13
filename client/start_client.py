@@ -28,8 +28,7 @@ def start_client(
     if not connected:
 
         print("MT5 Connection Failed")
-
-        return
+        print("Starting WebSocket without MT5...")
 
     print("START_CLIENT 2")
     print("MT5 Connected")

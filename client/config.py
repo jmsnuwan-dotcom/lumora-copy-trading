@@ -42,5 +42,5 @@ DEVIATION = 20
 # Risk Management
 # ===========================
 
-SL_POINTS = 500
-RR = 1.5
+SL_DISTANCE = 7.0
+TP_DISTANCE = 8.0

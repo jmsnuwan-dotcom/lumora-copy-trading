@@ -354,6 +354,18 @@ class AdminDashboardWindow(QMainWindow):
             "CLOSE SIGNAL"
         )
 
+        self.quick_buy_button.setStyleSheet(
+            "background-color: green; color: white;"
+        )
+
+        self.quick_sell_button.setStyleSheet(
+            "background-color: red; color: white;"
+        )
+
+        self.quick_close_button.setStyleSheet(
+            "background-color: yellow; color: black;"
+        )
+
         self.quick_buy_button.clicked.connect(
             self.quick_buy
         )

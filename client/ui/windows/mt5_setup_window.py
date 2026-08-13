@@ -233,9 +233,37 @@ class MT5SetupWindow(QMainWindow):
 
             for symbol in symbols:
 
-                name = symbol.name.upper()
+                name = (symbol.name or "").upper()
+                description = (
+                    symbol.description or ""
+                ).upper()
+                path = (symbol.path or "").upper()
 
-                if "XAUUSD" in name:
+                is_xau_usd = (
+                    "XAUUSD" in name
+                )
+
+                is_gold_symbol = (
+                    "GOLD" in name
+                    and "STOCKS" not in path
+                    and "ETF" not in path
+                )
+
+                is_gold_description = (
+                    "GOLD" in description
+                    and (
+                        "METAL" in path
+                        or "SPOT" in path
+                    )
+                    and "STOCKS" not in path
+                    and "ETF" not in path
+                )
+
+                if (
+                    is_xau_usd
+                    or is_gold_symbol
+                    or is_gold_description
+                ):
                     gold_symbols.append(
                         symbol.name
                     )

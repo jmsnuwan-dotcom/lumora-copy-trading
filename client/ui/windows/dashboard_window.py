@@ -193,9 +193,15 @@ class DashboardWindow(QMainWindow):
             self.signal_button.setText(
                 "Signals : ON"
             )
+            self.signal_button.setStyleSheet(
+                "background-color: green; color: white;"
+            )
         else:
             self.signal_button.setText(
                 "Signals : OFF"
+            )
+            self.signal_button.setStyleSheet(
+                "background-color: red; color: white;"
             )
 
     def refresh_dashboard(self):
