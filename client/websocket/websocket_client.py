@@ -7,6 +7,7 @@ import websockets
 
 from client.config import API_URL
 from client.services.connection_service import ConnectionService
+from client.services.market_data_service import MarketDataService
 from client.mt5.trade_executor import TradeExecutor
 
 
@@ -31,58 +32,108 @@ class WebSocketClient:
         self.connection = None
         self.executor = TradeExecutor()
 
+    # ==========================================================
+    # MAIN START
+    # ==========================================================
+
     async def start(self) -> None:
 
         print("WEBSOCKET START")
 
+        market_data_task = asyncio.create_task(
+            self._market_data_loop()
+        )
+
+        try:
+
+            while True:
+
+                try:
+
+                    print("CALLING _RUN")
+
+                    await self._run()
+
+                except httpx.HTTPStatusError as e:
+
+                    if e.response.status_code in (
+                        401,
+                        403,
+                    ):
+
+                        print(
+                            "WEBSOCKET ACCESS DENIED:",
+                            e.response.text,
+                        )
+
+                        logger.warning(
+                            "WebSocket stopped: "
+                            "subscription/access denied."
+                        )
+
+                        return
+
+                    print(
+                        "WEBSOCKET HTTP ERROR:",
+                        repr(e),
+                    )
+
+                    logger.exception(
+                        "WebSocket HTTP error."
+                    )
+
+                    await asyncio.sleep(5)
+
+                except Exception as e:
+
+                    print(
+                        "WEBSOCKET ERROR:",
+                        repr(e),
+                    )
+
+                    logger.exception(
+                        "WebSocket client stopped."
+                    )
+
+                    await asyncio.sleep(5)
+
+        finally:
+
+            market_data_task.cancel()
+
+            try:
+
+                await market_data_task
+
+            except asyncio.CancelledError:
+
+                pass
+
+    # ==========================================================
+    # MARKET DATA LOOP
+    # ==========================================================
+
+    async def _market_data_loop(self) -> None:
+
+        print("MARKET DATA LOOP STARTED")
+
         while True:
 
             try:
-                print("CALLING _RUN")
 
-                await self._run()
+                MarketDataService.update_gold_price()
 
-            except httpx.HTTPStatusError as e:
-
-                if e.response.status_code in (
-                    401,
-                    403,
-                ):
-                    print(
-                        "WEBSOCKET ACCESS DENIED:",
-                        e.response.text,
-                    )
-
-                    logger.warning(
-                        "WebSocket stopped: "
-                        "subscription/access denied."
-                    )
-
-                    return
-
-                print(
-                    "WEBSOCKET HTTP ERROR:",
-                    repr(e),
-                )
+            except Exception:
 
                 logger.exception(
-                    "WebSocket HTTP error."
+                    "Market data update failed."
                 )
 
-                await asyncio.sleep(5)
+            await asyncio.sleep(1)
 
-            except Exception as e:
-
-                print(
-                    "WEBSOCKET ERROR:",
-                    repr(e),
-                )
-
-                logger.exception(
-                    "WebSocket client stopped."
-                )
-
-                await asyncio.sleep(5)
+    # ==========================================================
+    # WEBSOCKET CONNECTION
+    # ==========================================================
 
     async def _run(self) -> None:
 
@@ -192,6 +243,10 @@ class WebSocketClient:
                 await self.handle_message(
                     data
                 )
+
+    # ==========================================================
+    # HANDLE SIGNAL
+    # ==========================================================
 
     async def handle_message(
         self,

@@ -23,19 +23,68 @@ class AdminPaymentWindow(QMainWindow):
         self.token = token
 
         self.setWindowTitle(
-            "Lumora - Admin Payment Management"
+            "Lumora AI Trading - Payment Management"
         )
-        self.resize(750, 700)
+        self.resize(1100, 760)
 
         page = QWidget()
+        page.setObjectName("page")
+
         layout = QVBoxLayout(page)
-        layout.setSpacing(12)
+        layout.setContentsMargins(
+            30, 25, 30, 25
+        )
+        layout.setSpacing(18)
 
         # =====================================================
-        # Payment Settings
+        # HEADER
         # =====================================================
+
+        header = QGroupBox()
+        header.setObjectName("header")
+
+        header_layout = QVBoxLayout(header)
+        header_layout.setContentsMargins(
+            22, 18, 22, 18
+        )
+
+        title = QLabel(
+            "Payment Management"
+        )
+        title.setObjectName("pageTitle")
+
+        subtitle = QLabel(
+            "Manage payment settings and approve client payments."
+        )
+        subtitle.setObjectName("subtitle")
+
+        header_layout.addWidget(title)
+        header_layout.addWidget(subtitle)
+
+        layout.addWidget(header)
+
+        # =====================================================
+        # PAYMENT SETTINGS
+        # =====================================================
+
+        settings_box = QGroupBox(
+            "PAYMENT SETTINGS"
+        )
+        settings_box.setObjectName(
+            "sectionBox"
+        )
+
+        settings_layout = QVBoxLayout(
+            settings_box
+        )
+        settings_layout.setContentsMargins(
+            20, 22, 20, 20
+        )
+        settings_layout.setSpacing(14)
 
         form = QFormLayout()
+        form.setHorizontalSpacing(20)
+        form.setVerticalSpacing(12)
 
         self.bank_name = QLineEdit()
         self.account_name = QLineEdit()
@@ -48,91 +97,103 @@ class AdminPaymentWindow(QMainWindow):
         self.crypto_address = QLineEdit()
         self.crypto_instructions = QTextEdit()
 
+        self.bank_instructions.setFixedHeight(80)
+        self.crypto_instructions.setFixedHeight(80)
+
         form.addRow(
-            "Bank Name :",
+            "Bank Name",
             self.bank_name,
         )
 
         form.addRow(
-            "Account Name :",
+            "Account Name",
             self.account_name,
         )
 
         form.addRow(
-            "Account Number :",
+            "Account Number",
             self.account_number,
         )
 
         form.addRow(
-            "Branch :",
+            "Branch",
             self.branch,
         )
 
         form.addRow(
-            "Bank Instructions :",
+            "Bank Instructions",
             self.bank_instructions,
         )
 
         form.addRow(
-            "Crypto Currency :",
+            "Crypto Currency",
             self.crypto_currency,
         )
 
         form.addRow(
-            "Crypto Network :",
+            "Crypto Network",
             self.crypto_network,
         )
 
         form.addRow(
-            "Crypto Address :",
+            "Crypto Address",
             self.crypto_address,
         )
 
         form.addRow(
-            "Crypto Instructions :",
+            "Crypto Instructions",
             self.crypto_instructions,
         )
 
+        settings_layout.addLayout(form)
+
         self.save_button = QPushButton(
             "Save Payment Settings"
+        )
+        self.save_button.setObjectName(
+            "primaryButton"
         )
 
         self.save_button.clicked.connect(
             self.save_settings
         )
 
-        settings_box = QGroupBox(
-            "Payment Details"
-        )
-
-        settings_layout = QVBoxLayout(
-            settings_box
-        )
-
-        settings_layout.addLayout(form)
-
         settings_layout.addWidget(
             self.save_button
         )
 
-        # =====================================================
-        # Pending Payments
-        # =====================================================
-
-        self.pending_status = QLabel(
-            "Loading pending payments..."
+        layout.addWidget(
+            settings_box
         )
 
-        self.pending_layout = QVBoxLayout()
-        self.pending_layout.setSpacing(8)
+        # =====================================================
+        # PENDING PAYMENTS
+        # =====================================================
 
         pending_box = QGroupBox(
-            "Client Payments Awaiting Approval"
+            "PENDING PAYMENTS"
+        )
+        pending_box.setObjectName(
+            "sectionBox"
         )
 
         pending_box_layout = QVBoxLayout(
             pending_box
         )
+        pending_box_layout.setContentsMargins(
+            20, 22, 20, 20
+        )
+        pending_box_layout.setSpacing(12)
+
+        self.pending_status = QLabel(
+            "Loading pending payments..."
+        )
+        self.pending_status.setObjectName(
+            "statusLabel"
+        )
+
+        self.pending_layout = QVBoxLayout()
+        self.pending_layout.setSpacing(10)
 
         pending_box_layout.addWidget(
             self.pending_status
@@ -142,14 +203,6 @@ class AdminPaymentWindow(QMainWindow):
             self.pending_layout
         )
 
-        # =====================================================
-        # Main Layout
-        # =====================================================
-
-        layout.addWidget(
-            settings_box
-        )
-
         layout.addWidget(
             pending_box
         )
@@ -157,14 +210,147 @@ class AdminPaymentWindow(QMainWindow):
         self.setCentralWidget(page)
 
         # =====================================================
-        # Initial Load
+        # STYLE
+        # =====================================================
+
+        self.setStyleSheet(
+            """
+            QWidget#page {
+                background: #05050d;
+                color: #f5f5f5;
+                font-family: "Segoe UI";
+                font-size: 13px;
+            }
+
+            QGroupBox#header {
+                background: #080811;
+                border: 1px solid #25253b;
+                border-radius: 16px;
+            }
+
+            QGroupBox#sectionBox {
+                background: #080811;
+                border: 1px solid #28283d;
+                border-radius: 16px;
+                margin-top: 12px;
+                padding-top: 18px;
+                color: #b94cff;
+                font-weight: 700;
+                letter-spacing: 1px;
+            }
+
+            QGroupBox#sectionBox::title {
+                subcontrol-origin: margin;
+                left: 18px;
+                padding: 0 8px;
+                color: #b94cff;
+            }
+
+            QLabel#pageTitle {
+                color: #ffffff;
+                font-size: 28px;
+                font-weight: 700;
+            }
+
+            QLabel#subtitle {
+                color: #8e8ea8;
+                font-size: 13px;
+                margin-top: 4px;
+            }
+
+            QLabel#statusLabel {
+                color: #00e6a8;
+                font-weight: 600;
+                padding: 5px 0;
+            }
+
+            QLineEdit,
+            QTextEdit {
+                background: #07070f;
+                border: 1px solid #2b2b42;
+                border-radius: 9px;
+                padding: 10px 12px;
+                color: #ffffff;
+                selection-background-color: #7b3cff;
+            }
+
+            QLineEdit:focus,
+            QTextEdit:focus {
+                border: 1px solid #9b3cff;
+            }
+
+            QLabel {
+                color: #dddded;
+            }
+
+            QFormLayout QLabel {
+                color: #a9a9c2;
+                font-weight: 600;
+            }
+
+            QPushButton {
+                background: #0b0b16;
+                border: 1px solid #30304a;
+                border-radius: 9px;
+                padding: 10px 16px;
+                color: #ffffff;
+                font-weight: 600;
+            }
+
+            QPushButton:hover {
+                border: 1px solid #8b3dff;
+                background: #121222;
+            }
+
+            QPushButton:pressed {
+                background: #1b1730;
+            }
+
+            QPushButton#primaryButton {
+                background: qlineargradient(
+                    x1: 0, y1: 0,
+                    x2: 1, y2: 0,
+                    stop: 0 #0799e8,
+                    stop: 0.5 #4d66ff,
+                    stop: 1 #d11cff
+                );
+                border: none;
+                min-height: 42px;
+                font-size: 14px;
+            }
+
+            QPushButton#primaryButton:hover {
+                background: qlineargradient(
+                    x1: 0, y1: 0,
+                    x2: 1, y2: 0,
+                    stop: 0 #16a9f5,
+                    stop: 0.5 #6278ff,
+                    stop: 1 #df35ff
+                );
+            }
+
+            QScrollBar:vertical {
+                background: #07070f;
+                width: 8px;
+                border-radius: 4px;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #343450;
+                border-radius: 4px;
+            }
+            """
+        )
+
+        # =====================================================
+        # INITIAL LOAD
         # =====================================================
 
         self.load_settings()
         self.load_pending_payments()
 
         # =====================================================
-        # Refresh Pending Payments
+        # AUTO REFRESH
         # =====================================================
 
         self.refresh_timer = QTimer(self)
@@ -176,7 +362,7 @@ class AdminPaymentWindow(QMainWindow):
         self.refresh_timer.start(30000)
 
     # =========================================================
-    # Payment Settings
+    # PAYMENT SETTINGS
     # =========================================================
 
     def load_settings(self):
@@ -294,7 +480,7 @@ class AdminPaymentWindow(QMainWindow):
         )
 
     # =========================================================
-    # Pending Payments
+    # PENDING PAYMENTS
     # =========================================================
 
     def load_pending_payments(self):
@@ -316,13 +502,13 @@ class AdminPaymentWindow(QMainWindow):
         if not payments:
 
             self.pending_status.setText(
-                "No pending payments."
+                "• 0 PENDING PAYMENTS"
             )
 
             return
 
         self.pending_status.setText(
-            f"{len(payments)} pending payment(s)"
+            f"• {len(payments)} PENDING PAYMENT(S)"
         )
 
         for payment in payments:
@@ -347,13 +533,51 @@ class AdminPaymentWindow(QMainWindow):
         payment: dict,
     ):
 
-        row = QWidget()
+        row = QGroupBox()
+        row.setObjectName(
+            "paymentCard"
+        )
+
+        row.setStyleSheet(
+            """
+            QGroupBox#paymentCard {
+                background: #07070f;
+                border: 1px solid #29293f;
+                border-radius: 12px;
+            }
+
+            QGroupBox#paymentCard:hover {
+                border: 1px solid #713cff;
+            }
+            """
+        )
 
         row_layout = QVBoxLayout(row)
-        row_layout.setSpacing(6)
+        row_layout.setContentsMargins(
+            16, 14, 16, 14
+        )
+        row_layout.setSpacing(8)
 
         name_button = QPushButton(
-            f"> {payment['full_name']}"
+            f"›  {payment['full_name']}"
+        )
+
+        name_button.setStyleSheet(
+            """
+            QPushButton {
+                background: transparent;
+                border: none;
+                text-align: left;
+                padding: 5px;
+                color: #ffffff;
+                font-size: 15px;
+                font-weight: 700;
+            }
+
+            QPushButton:hover {
+                color: #bd4cff;
+            }
+            """
         )
 
         details = QWidget()
@@ -362,6 +586,10 @@ class AdminPaymentWindow(QMainWindow):
         details_layout = QVBoxLayout(
             details
         )
+        details_layout.setContentsMargins(
+            10, 8, 10, 5
+        )
+        details_layout.setSpacing(6)
 
         details_layout.addWidget(
             QLabel(
@@ -422,6 +650,20 @@ class AdminPaymentWindow(QMainWindow):
             "VIEW PAYMENT SLIP"
         )
 
+        view_slip_button.setStyleSheet(
+            """
+            QPushButton {
+                border: 1px solid #00d9ff;
+                color: #00d9ff;
+                min-height: 34px;
+            }
+
+            QPushButton:hover {
+                background: #09202a;
+            }
+            """
+        )
+
         view_slip_button.clicked.connect(
             lambda checked=False,
             subscription_id=payment["id"]:
@@ -435,7 +677,22 @@ class AdminPaymentWindow(QMainWindow):
         )
 
         accept_button = QPushButton(
-            "ACCEPT"
+            "ACCEPT PAYMENT"
+        )
+
+        accept_button.setStyleSheet(
+            """
+            QPushButton {
+                background: #063b2c;
+                border: 1px solid #00d9a0;
+                color: #00e6a8;
+                min-height: 38px;
+            }
+
+            QPushButton:hover {
+                background: #07563f;
+            }
+            """
         )
 
         accept_button.clicked.connect(
@@ -461,13 +718,13 @@ class AdminPaymentWindow(QMainWindow):
             if visible:
 
                 name_button.setText(
-                    f"> {payment['full_name']}"
+                    f"›  {payment['full_name']}"
                 )
 
             else:
 
                 name_button.setText(
-                    f"v {payment['full_name']}"
+                    f"⌄  {payment['full_name']}"
                 )
 
         name_button.clicked.connect(
@@ -485,6 +742,10 @@ class AdminPaymentWindow(QMainWindow):
         self.pending_layout.addWidget(
             row
         )
+
+    # =========================================================
+    # VIEW PAYMENT SLIP
+    # =========================================================
 
     def view_payment_slip(
         self,
@@ -582,6 +843,10 @@ class AdminPaymentWindow(QMainWindow):
                 f"Unable to open payment slip.\n\n{e}",
             )
 
+    # =========================================================
+    # ACCEPT PAYMENT
+    # =========================================================
+
     def accept_payment(
         self,
         subscription_id: int,
@@ -611,7 +876,7 @@ class AdminPaymentWindow(QMainWindow):
         self.load_pending_payments()
 
     # =========================================================
-    # Close
+    # CLOSE
     # =========================================================
 
     def closeEvent(self, event):

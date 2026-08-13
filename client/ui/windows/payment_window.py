@@ -1,4 +1,5 @@
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFileDialog,
     QLabel,
@@ -7,6 +8,10 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QHBoxLayout,
+    QFrame,
+    QScrollArea,
+    QGraphicsDropShadowEffect,
 )
 
 from client.api.payment_api import PaymentAPI
@@ -34,117 +39,18 @@ class PaymentWindow(QMainWindow):
         self.selected_file = None
         self.payment_submitted = False
 
-        self.setWindowTitle("Lumora Payment")
-        self.resize(600, 650)
-
-        page = QWidget()
-        layout = QVBoxLayout(page)
-
-        layout.setAlignment(Qt.AlignTop)
-        layout.setSpacing(12)
-
-        title = QLabel(
-            "Complete Your Payment"
-        )
-        title.setAlignment(Qt.AlignCenter)
-
-        subscription_details = QLabel(
-            f"Package: {self.package_name}\n"
-            f"Plan: {self.plan_name}\n"
-            f"Duration: {self.duration}\n"
-            f"Final Price: ${self.final_price}"
+        self.setWindowTitle(
+            "Lumora AI Trading - Payment"
         )
 
-        subscription_details.setAlignment(
-            Qt.AlignCenter
+        self.resize(950, 700)
+
+        self.setMinimumSize(
+            850,
+            620,
         )
 
-        subscription_details.setWordWrap(True)
-
-        self.status_label = QLabel(
-            "Payment Status : Checking..."
-        )
-
-        self.status_label.setAlignment(
-            Qt.AlignCenter
-        )
-
-        self.bank_details = QLabel(
-            "Loading bank payment details..."
-        )
-
-        self.bank_details.setAlignment(
-            Qt.AlignLeft
-        )
-
-        self.bank_details.setWordWrap(True)
-
-        self.crypto_details = QLabel(
-            "Loading crypto payment details..."
-        )
-
-        self.crypto_details.setAlignment(
-            Qt.AlignLeft
-        )
-
-        self.crypto_details.setWordWrap(True)
-
-        self.file_label = QLabel(
-            "No payment slip selected."
-        )
-
-        self.file_label.setAlignment(
-            Qt.AlignCenter
-        )
-
-        self.file_label.setWordWrap(True)
-
-        self.select_button = QPushButton(
-            "Select Payment Slip"
-        )
-
-        self.submit_button = QPushButton(
-            "Submit Payment"
-        )
-
-        self.select_button.clicked.connect(
-            self.select_file
-        )
-
-        self.submit_button.clicked.connect(
-            self.submit_payment
-        )
-
-        layout.addWidget(title)
-        layout.addWidget(
-            subscription_details
-        )
-
-        layout.addWidget(
-            self.status_label
-        )
-
-        layout.addWidget(
-            self.bank_details
-        )
-
-        layout.addWidget(
-            self.crypto_details
-        )
-
-        layout.addWidget(
-            self.file_label
-        )
-
-        layout.addWidget(
-            self.select_button
-        )
-
-        layout.addWidget(
-            self.submit_button
-        )
-
-        self.setCentralWidget(page)
+        self.init_ui()
 
         self.refresh_timer = QTimer(self)
 
@@ -155,6 +61,528 @@ class PaymentWindow(QMainWindow):
         self.load_payment_settings()
 
         self.check_existing_payment()
+
+    def init_ui(self):
+
+        page = QWidget()
+
+        page.setObjectName(
+            "paymentPage"
+        )
+
+        main_layout = QVBoxLayout(page)
+
+        main_layout.setContentsMargins(
+            35,
+            30,
+            35,
+            30,
+        )
+
+        main_layout.setSpacing(
+            18,
+        )
+
+        # ==========================================
+        # HEADER
+        # ==========================================
+
+        title = QLabel(
+            "Complete Your Payment"
+        )
+
+        title.setAlignment(
+            Qt.AlignCenter
+        )
+
+        title.setObjectName(
+            "title"
+        )
+
+        subtitle = QLabel(
+            "SECURE YOUR LUMORA AI TRADING PACKAGE"
+        )
+
+        subtitle.setAlignment(
+            Qt.AlignCenter
+        )
+
+        subtitle.setObjectName(
+            "subtitle"
+        )
+
+        main_layout.addWidget(
+            title
+        )
+
+        main_layout.addWidget(
+            subtitle
+        )
+
+        # ==========================================
+        # SUBSCRIPTION CARD
+        # ==========================================
+
+        subscription_card = QFrame()
+
+        subscription_card.setObjectName(
+            "infoCard"
+        )
+
+        subscription_layout = QVBoxLayout(
+            subscription_card
+        )
+
+        subscription_layout.setContentsMargins(
+            25,
+            18,
+            25,
+            18,
+        )
+
+        subscription_title = QLabel(
+            "YOUR PACKAGE"
+        )
+
+        subscription_title.setObjectName(
+            "sectionTitle"
+        )
+
+        subscription_title.setAlignment(
+            Qt.AlignCenter
+        )
+
+        subscription_layout.addWidget(
+            subscription_title
+        )
+
+        self.subscription_details = QLabel(
+            f"Package: {self.package_name}\n"
+            f"Plan: {self.plan_name}\n"
+            f"Duration: {self.duration}\n"
+            f"Final Price: ${self.final_price}"
+        )
+
+        self.subscription_details.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.subscription_details.setObjectName(
+            "subscriptionDetails"
+        )
+
+        subscription_layout.addWidget(
+            self.subscription_details
+        )
+
+        main_layout.addWidget(
+            subscription_card
+        )
+
+        # ==========================================
+        # STATUS
+        # ==========================================
+
+        self.status_label = QLabel(
+            "Payment Status : Checking..."
+        )
+
+        self.status_label.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.status_label.setObjectName(
+            "status"
+        )
+
+        main_layout.addWidget(
+            self.status_label
+        )
+
+        # ==========================================
+        # PAYMENT METHODS
+        # ==========================================
+
+        methods_layout = QHBoxLayout()
+
+        methods_layout.setSpacing(
+            18,
+        )
+
+        # ------------------------------------------
+        # BANK
+        # ------------------------------------------
+
+        bank_card = QFrame()
+
+        bank_card.setObjectName(
+            "paymentCard"
+        )
+
+        bank_layout = QVBoxLayout(
+            bank_card
+        )
+
+        bank_layout.setContentsMargins(
+            22,
+            20,
+            22,
+            20,
+        )
+
+        bank_title = QLabel(
+            "BANK PAYMENT"
+        )
+
+        bank_title.setObjectName(
+            "paymentTitle"
+        )
+
+        bank_layout.addWidget(
+            bank_title
+        )
+
+        self.bank_details = QLabel(
+            "Loading bank payment details..."
+        )
+
+        self.bank_details.setAlignment(
+            Qt.AlignLeft
+        )
+
+        self.bank_details.setWordWrap(
+            True
+        )
+
+        self.bank_details.setObjectName(
+            "paymentDetails"
+        )
+
+        bank_layout.addWidget(
+            self.bank_details
+        )
+
+        methods_layout.addWidget(
+            bank_card
+        )
+
+        # ------------------------------------------
+        # CRYPTO
+        # ------------------------------------------
+
+        crypto_card = QFrame()
+
+        crypto_card.setObjectName(
+            "paymentCard"
+        )
+
+        crypto_layout = QVBoxLayout(
+            crypto_card
+        )
+
+        crypto_layout.setContentsMargins(
+            22,
+            20,
+            22,
+            20,
+        )
+
+        crypto_title = QLabel(
+            "CRYPTO PAYMENT"
+        )
+
+        crypto_title.setObjectName(
+            "paymentTitle"
+        )
+
+        crypto_layout.addWidget(
+            crypto_title
+        )
+
+        self.crypto_details = QLabel(
+            "Loading crypto payment details..."
+        )
+
+        self.crypto_details.setAlignment(
+            Qt.AlignLeft
+        )
+
+        self.crypto_details.setWordWrap(
+            True
+        )
+
+        self.crypto_details.setObjectName(
+            "paymentDetails"
+        )
+
+        crypto_layout.addWidget(
+            self.crypto_details
+        )
+
+        methods_layout.addWidget(
+            crypto_card
+        )
+
+        main_layout.addLayout(
+            methods_layout
+        )
+
+        # ==========================================
+        # PAYMENT SLIP
+        # ==========================================
+
+        slip_card = QFrame()
+
+        slip_card.setObjectName(
+            "slipCard"
+        )
+
+        slip_layout = QVBoxLayout(
+            slip_card
+        )
+
+        slip_layout.setContentsMargins(
+            22,
+            18,
+            22,
+            18,
+        )
+
+        slip_title = QLabel(
+            "PAYMENT SLIP"
+        )
+
+        slip_title.setObjectName(
+            "sectionTitle"
+        )
+
+        slip_title.setAlignment(
+            Qt.AlignCenter
+        )
+
+        slip_layout.addWidget(
+            slip_title
+        )
+
+        self.file_label = QLabel(
+            "No payment slip selected."
+        )
+
+        self.file_label.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.file_label.setWordWrap(
+            True
+        )
+
+        self.file_label.setObjectName(
+            "fileLabel"
+        )
+
+        slip_layout.addWidget(
+            self.file_label
+        )
+
+        # ------------------------------------------
+        # BUTTONS
+        # ------------------------------------------
+
+        buttons_layout = QHBoxLayout()
+
+        buttons_layout.setSpacing(
+            12,
+        )
+
+        self.select_button = QPushButton(
+            "Select Payment Slip"
+        )
+
+        self.select_button.setObjectName(
+            "secondaryButton"
+        )
+
+        self.select_button.setMinimumHeight(
+            48
+        )
+
+        self.submit_button = QPushButton(
+            "Submit Payment"
+        )
+
+        self.submit_button.setObjectName(
+            "primaryButton"
+        )
+
+        self.submit_button.setMinimumHeight(
+            48
+        )
+
+        buttons_layout.addWidget(
+            self.select_button
+        )
+
+        buttons_layout.addWidget(
+            self.submit_button
+        )
+
+        slip_layout.addLayout(
+            buttons_layout
+        )
+
+        main_layout.addWidget(
+            slip_card
+        )
+
+        # ==========================================
+        # SIGNALS
+        # ==========================================
+
+        self.select_button.clicked.connect(
+            self.select_file
+        )
+
+        self.submit_button.clicked.connect(
+            self.submit_payment
+        )
+
+        # ==========================================
+        # STYLE
+        # ==========================================
+
+        self.setCentralWidget(
+            page
+        )
+
+        self.apply_style()
+
+    def apply_style(self):
+
+        self.setStyleSheet(
+            """
+            QMainWindow,
+            QWidget#paymentPage {
+                background: #03040A;
+            }
+
+            QLabel#title {
+                color: #FFFFFF;
+                font-size: 30px;
+                font-weight: 700;
+            }
+
+            QLabel#subtitle {
+                color: #A3A3B4;
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: 2px;
+            }
+
+            QFrame#infoCard,
+            QFrame#paymentCard,
+            QFrame#slipCard {
+                background: #070913;
+                border: 1px solid #29283B;
+                border-radius: 16px;
+            }
+
+            QLabel#sectionTitle {
+                color: #B8B8C8;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 2px;
+            }
+
+            QLabel#subscriptionDetails {
+                color: #FFFFFF;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+
+            QLabel#status {
+                color: #D2D2DF;
+                background: #080A14;
+                border: 1px solid #343047;
+                border-radius: 10px;
+                padding: 12px;
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            QLabel#paymentTitle {
+                color: #FFFFFF;
+                font-size: 16px;
+                font-weight: 700;
+                padding-bottom: 8px;
+            }
+
+            QLabel#paymentDetails {
+                color: #C2C2D0;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+
+            QLabel#fileLabel {
+                color: #9999A9;
+                background: #05060D;
+                border: 1px dashed #39364F;
+                border-radius: 10px;
+                padding: 12px;
+                min-height: 35px;
+            }
+
+            QPushButton#primaryButton {
+                color: #FFFFFF;
+                font-size: 14px;
+                font-weight: 700;
+                border: none;
+                border-radius: 10px;
+
+                background: qlineargradient(
+                    x1: 0,
+                    y1: 0,
+                    x2: 1,
+                    y2: 0,
+                    stop: 0 #079DF5,
+                    stop: 0.5 #5858FF,
+                    stop: 1 #D42CFF
+                );
+            }
+
+            QPushButton#primaryButton:hover {
+                background: qlineargradient(
+                    x1: 0,
+                    y1: 0,
+                    x2: 1,
+                    y2: 0,
+                    stop: 0 #16B5FF,
+                    stop: 0.5 #7474FF,
+                    stop: 1 #E348FF
+                );
+            }
+
+            QPushButton#secondaryButton {
+                color: #FFFFFF;
+                font-size: 14px;
+                font-weight: 600;
+                background: #080A14;
+                border: 1px solid #34324A;
+                border-radius: 10px;
+            }
+
+            QPushButton#secondaryButton:hover {
+                border: 1px solid #7B4CFF;
+                background: #0D0B1C;
+            }
+
+            QPushButton#secondaryButton:disabled,
+            QPushButton#primaryButton:disabled {
+                color: #686878;
+                background: #10111A;
+                border: 1px solid #20202D;
+            }
+            """
+        )
 
     def load_payment_settings(self):
 
@@ -173,27 +601,26 @@ class PaymentWindow(QMainWindow):
             return
 
         self.bank_details.setText(
-            "BANK PAYMENT\n"
-            "------------------------------\n"
-            f"Bank : {data['bank_name']}\n"
-            f"Account Name : {data['account_name']}\n"
-            f"Account Number : "
+            "Bank : "
+            f"{data['bank_name']}\n"
+            "Account Name : "
+            f"{data['account_name']}\n"
+            "Account Number : "
             f"{data['account_number']}\n"
-            f"Branch : {data['branch']}\n"
-            f"Instructions : "
+            "Branch : "
+            f"{data['branch']}\n\n"
+            "Instructions :\n"
             f"{data['bank_instructions']}"
         )
 
         self.crypto_details.setText(
-            "CRYPTO PAYMENT\n"
-            "------------------------------\n"
-            f"Currency : "
+            "Currency : "
             f"{data['crypto_currency']}\n"
-            f"Network : "
+            "Network : "
             f"{data['crypto_network']}\n"
-            f"Address : "
-            f"{data['crypto_address']}\n"
-            f"Instructions : "
+            "Address : "
+            f"{data['crypto_address']}\n\n"
+            "Instructions :\n"
             f"{data['crypto_instructions']}"
         )
 
@@ -206,9 +633,11 @@ class PaymentWindow(QMainWindow):
         )
 
         if subscription is None:
+
             self.set_waiting_state(
                 submitted=False
             )
+
             return
 
         status = str(

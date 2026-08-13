@@ -8,9 +8,9 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QDoubleSpinBox,
-    QComboBox,
     QVBoxLayout,
     QWidget,
 )
@@ -25,11 +25,13 @@ class AdminPackageWindow(QMainWindow):
 
         self.token = token
         self.packages = []
+        self.selected_package = None
+        self.plans = []
 
         self.setWindowTitle(
-            "Lumora - Package Management"
+            "Lumora AI Trading - Package Management"
         )
-        self.resize(700, 700)
+        self.resize(1000, 750)
 
         self.init_ui()
         self.load_packages()
@@ -39,21 +41,82 @@ class AdminPackageWindow(QMainWindow):
         page = QWidget()
 
         layout = QVBoxLayout(page)
-        layout.setSpacing(12)
+        layout.setContentsMargins(
+            28,
+            24,
+            28,
+            24,
+        )
+        layout.setSpacing(16)
 
         # ==========================================
-        # Package Form
+        # HEADER
+        # ==========================================
+
+        header_layout = QHBoxLayout()
+
+        header_text = QVBoxLayout()
+        header_text.setSpacing(4)
+
+        title = QLabel(
+            "Package Management"
+        )
+        title.setObjectName("pageTitle")
+
+        subtitle = QLabel(
+            "Manage Lumora AI Trading packages and pricing."
+        )
+        subtitle.setObjectName("pageSubtitle")
+
+        header_text.addWidget(title)
+        header_text.addWidget(subtitle)
+
+        header_layout.addLayout(
+            header_text
+        )
+
+        header_layout.addStretch()
+
+        self.package_count = QLabel(
+            "• 0 PACKAGES"
+        )
+        self.package_count.setObjectName(
+            "statusBadge"
+        )
+
+        header_layout.addWidget(
+            self.package_count
+        )
+
+        layout.addLayout(
+            header_layout
+        )
+
+        # ==========================================
+        # PACKAGE FORM
         # ==========================================
 
         form_box = QGroupBox(
-            "Package"
+            "PACKAGE SETTINGS"
+        )
+        form_box.setObjectName(
+            "sectionBox"
         )
 
         form = QFormLayout()
 
+        form.setContentsMargins(
+            20,
+            22,
+            20,
+            22,
+        )
+
+        form.setSpacing(14)
+
         self.name = QLineEdit()
         self.name.setPlaceholderText(
-            "Package name"
+            "Enter package name"
         )
 
         self.lot_size = QDoubleSpinBox()
@@ -69,16 +132,6 @@ class AdminPackageWindow(QMainWindow):
             0.01
         )
 
-        self.monthly_price = QDoubleSpinBox()
-        self.monthly_price.setDecimals(2)
-        self.monthly_price.setRange(0.00, 1000000.0)
-        self.monthly_price.setValue(0.00)
-
-        self.lifetime_price = QDoubleSpinBox()
-        self.lifetime_price.setDecimals(2)
-        self.lifetime_price.setRange(0.00, 1000000.0)
-        self.lifetime_price.setValue(0.00)
-
         self.trade_copies = QSpinBox()
         self.trade_copies.setRange(
             1,
@@ -88,53 +141,92 @@ class AdminPackageWindow(QMainWindow):
             1
         )
 
+        self.monthly_price = QDoubleSpinBox()
+        self.monthly_price.setDecimals(2)
+        self.monthly_price.setRange(
+            0.00,
+            1000000.0,
+        )
+        self.monthly_price.setValue(
+            0.00
+        )
+
+        self.lifetime_price = QDoubleSpinBox()
+        self.lifetime_price.setDecimals(2)
+        self.lifetime_price.setRange(
+            0.00,
+            1000000.0,
+        )
+        self.lifetime_price.setValue(
+            0.00
+        )
+
         form.addRow(
-            "Package Name :",
+            "Package Name",
             self.name,
         )
 
         form.addRow(
-            "Lot Size :",
+            "Lot Size",
             self.lot_size,
         )
 
         form.addRow(
-            "Trade Copies :",
+            "Trade Copies",
             self.trade_copies,
         )
 
-        form_box.setLayout(form)
-
         form.addRow(
-            "Monthly Price ($) :",
+            "Monthly Price ($)",
             self.monthly_price,
         )
 
         form.addRow(
-            "Lifetime Price ($) :",
+            "Lifetime Price ($)",
             self.lifetime_price,
         )
 
+        form_box.setLayout(
+            form
+        )
+
+        layout.addWidget(
+            form_box
+        )
+
         # ==========================================
-        # Buttons
+        # ACTION BUTTONS
         # ==========================================
 
         button_layout = QHBoxLayout()
+        button_layout.setSpacing(10)
 
         self.create_button = QPushButton(
             "Create Package"
+        )
+        self.create_button.setObjectName(
+            "primaryButton"
         )
 
         self.update_button = QPushButton(
             "Update Selected"
         )
+        self.update_button.setObjectName(
+            "updateButton"
+        )
 
         self.disable_button = QPushButton(
             "Disable Selected"
         )
+        self.disable_button.setObjectName(
+            "dangerButton"
+        )
 
         self.clear_button = QPushButton(
             "Clear"
+        )
+        self.clear_button.setObjectName(
+            "secondaryButton"
         )
 
         self.create_button.clicked.connect(
@@ -169,57 +261,134 @@ class AdminPackageWindow(QMainWindow):
             self.clear_button
         )
 
-        # ==========================================
-        # Package List
-        # ==========================================
-
-        self.status = QLabel(
-            "Loading packages..."
+        layout.addLayout(
+            button_layout
         )
 
-        self.package_layout = QVBoxLayout()
-        self.package_layout.setSpacing(8)
+        # ==========================================
+        # PACKAGE LIST
+        # ==========================================
 
         list_box = QGroupBox(
-            "Existing Packages"
+            "REGISTERED PACKAGES"
+        )
+        list_box.setObjectName(
+            "sectionBox"
         )
 
         list_layout = QVBoxLayout(
             list_box
         )
 
+        list_layout.setContentsMargins(
+            16,
+            18,
+            16,
+            16,
+        )
+
+        self.status = QLabel(
+            "Loading packages..."
+        )
+        self.status.setObjectName(
+            "listStatus"
+        )
+
         list_layout.addWidget(
             self.status
         )
 
-        list_layout.addLayout(
+        # Header row
+        header = QWidget()
+
+        header_layout = QHBoxLayout(
+            header
+        )
+
+        header_layout.setContentsMargins(
+            12,
+            6,
+            12,
+            6,
+        )
+
+        client_header = QLabel(
+            "PACKAGE"
+        )
+        client_header.setObjectName(
+            "tableHeader"
+        )
+
+        action_header = QLabel(
+            "ACTIONS"
+        )
+        action_header.setObjectName(
+            "tableHeader"
+        )
+        action_header.setAlignment(
+            Qt.AlignRight
+        )
+
+        header_layout.addWidget(
+            client_header
+        )
+
+        header_layout.addStretch()
+
+        header_layout.addWidget(
+            action_header
+        )
+
+        list_layout.addWidget(
+            header
+        )
+
+        # Scroll area
+        self.package_layout = QVBoxLayout()
+        self.package_layout.setSpacing(8)
+
+        container = QWidget()
+        container.setLayout(
             self.package_layout
         )
 
-        # ==========================================
-        # Main Layout
-        # ==========================================
-
-        layout.addWidget(
-            form_box
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(
+            True
+        )
+        scroll.setWidget(
+            container
+        )
+        scroll.setFrameShape(
+            QScrollArea.NoFrame
         )
 
-        layout.addLayout(
-            button_layout
+        list_layout.addWidget(
+            scroll
         )
 
         layout.addWidget(
             list_box
         )
 
-        layout.setAlignment(
-            Qt.AlignTop
+        self.setCentralWidget(
+            page
         )
 
-        self.setCentralWidget(page)
+        self.update_button.setEnabled(
+            False
+        )
+
+        self.disable_button.setEnabled(
+            False
+        )
+
+        self.setStyleSheet(
+            self.get_stylesheet()
+        )
 
     # ==========================================
-    # Load Packages
+    # LOAD PACKAGES
     # ==========================================
 
     def load_packages(self):
@@ -230,7 +399,9 @@ class AdminPackageWindow(QMainWindow):
 
         while self.package_layout.count():
 
-            item = self.package_layout.takeAt(0)
+            item = self.package_layout.takeAt(
+                0
+            )
 
             widget = item.widget()
 
@@ -243,6 +414,10 @@ class AdminPackageWindow(QMainWindow):
                 "Unable to load packages."
             )
 
+            self.package_count.setText(
+                "• OFFLINE"
+            )
+
             return
 
         if not packages:
@@ -251,10 +426,18 @@ class AdminPackageWindow(QMainWindow):
                 "No packages found."
             )
 
+            self.package_count.setText(
+                "• 0 PACKAGES"
+            )
+
             return
 
         self.status.setText(
-            f"Packages : {len(packages)}"
+            f"{len(packages)} package(s) available"
+        )
+
+        self.package_count.setText(
+            f"• {len(packages)} PACKAGES"
         )
 
         for package in packages:
@@ -264,7 +447,7 @@ class AdminPackageWindow(QMainWindow):
             )
 
     # ==========================================
-    # Package Row
+    # PACKAGE ROW
     # ==========================================
 
     def add_package_row(
@@ -273,40 +456,98 @@ class AdminPackageWindow(QMainWindow):
     ):
 
         row = QWidget()
+        row.setObjectName(
+            "packageRow"
+        )
 
-        row_layout = QHBoxLayout(row)
+        row_layout = QHBoxLayout(
+            row
+        )
+
         row_layout.setContentsMargins(
-            4,
-            4,
-            4,
-            4,
+            14,
+            12,
+            14,
+            12,
         )
 
-        info = QLabel(
-            f'#{package["id"]}  '
-            f'{package["name"]}  |  '
-            f'Price: ${package.get("price", 0)}  |  '
-            f'Lot: {package["lot_size"]}  |  '
-            f'Copies: '
-            f'{package["trades_per_signal"]}'
+        row_layout.setSpacing(12)
+
+        name = QLabel(
+            package.get(
+                "name",
+                "Unknown",
+            )
+        )
+        name.setObjectName(
+            "packageName"
         )
 
-        select_button = QPushButton(
-            "Edit"
+        package_id = QLabel(
+            f'Package #{package["id"]}'
+        )
+        package_id.setObjectName(
+            "packageId"
         )
 
-        select_button.clicked.connect(
+        price = package.get(
+            "price",
+            0,
+        )
+
+        lot_size = package.get(
+            "lot_size",
+            0,
+        )
+
+        copies = package.get(
+            "trades_per_signal",
+            0,
+        )
+
+        info_layout = QVBoxLayout()
+        info_layout.setSpacing(3)
+
+        info_layout.addWidget(
+            name
+        )
+
+        details = QLabel(
+            f"{package_id.text()}   •   "
+            f"Price: ${price}   •   "
+            f"Lot: {lot_size}   •   "
+            f"Copies: {copies}"
+        )
+
+        details.setObjectName(
+            "packageDetails"
+        )
+
+        info_layout.addWidget(
+            details
+        )
+
+        row_layout.addLayout(
+            info_layout
+        )
+
+        row_layout.addStretch()
+
+        edit_button = QPushButton(
+            "EDIT"
+        )
+        edit_button.setObjectName(
+            "editButton"
+        )
+
+        edit_button.clicked.connect(
             lambda checked=False,
             data=package:
             self.select_package(data)
         )
 
         row_layout.addWidget(
-            info
-        )
-
-        row_layout.addWidget(
-            select_button
+            edit_button
         )
 
         self.package_layout.addWidget(
@@ -314,7 +555,7 @@ class AdminPackageWindow(QMainWindow):
         )
 
     # ==========================================
-    # Select Package
+    # SELECT PACKAGE
     # ==========================================
 
     def select_package(
@@ -329,13 +570,25 @@ class AdminPackageWindow(QMainWindow):
         )
 
         self.lot_size.setValue(
-            float(package["lot_size"])
+            float(
+                package["lot_size"]
+            )
         )
 
         self.trade_copies.setValue(
             int(
-                package["trades_per_signal"]
+                package[
+                    "trades_per_signal"
+                ]
             )
+        )
+
+        self.monthly_price.setValue(
+            0.00
+        )
+
+        self.lifetime_price.setValue(
+            0.00
         )
 
         plans = PackageAPI.get_plans(
@@ -347,13 +600,19 @@ class AdminPackageWindow(QMainWindow):
         for plan in self.plans:
 
             if plan["name"] == "Monthly":
+
                 self.monthly_price.setValue(
-                    float(plan["price"])
+                    float(
+                        plan["price"]
+                    )
                 )
 
             elif plan["name"] == "Lifetime":
+
                 self.lifetime_price.setValue(
-                    float(plan["price"])
+                    float(
+                        plan["price"]
+                    )
                 )
 
         self.update_button.setEnabled(
@@ -365,7 +624,7 @@ class AdminPackageWindow(QMainWindow):
         )
 
     # ==========================================
-    # Create
+    # CREATE
     # ==========================================
 
     def create_package(self):
@@ -411,7 +670,7 @@ class AdminPackageWindow(QMainWindow):
         self.load_packages()
 
     # ==========================================
-    # Update
+    # UPDATE
     # ==========================================
 
     def update_package(self):
@@ -467,12 +726,14 @@ class AdminPackageWindow(QMainWindow):
         for plan in self.plans:
 
             if plan["name"] == "Monthly":
+
                 PackageAPI.update_plan_price(
                     plan_id=plan["id"],
                     price=self.monthly_price.value(),
                 )
 
             elif plan["name"] == "Lifetime":
+
                 PackageAPI.update_plan_price(
                     plan_id=plan["id"],
                     price=self.lifetime_price.value(),
@@ -488,7 +749,7 @@ class AdminPackageWindow(QMainWindow):
         self.load_packages()
 
     # ==========================================
-    # Disable
+    # DISABLE
     # ==========================================
 
     def disable_package(self):
@@ -516,6 +777,9 @@ class AdminPackageWindow(QMainWindow):
                 "Are you sure you want to "
                 f'disable "{package["name"]}"?'
             ),
+            QMessageBox.Yes
+            | QMessageBox.No,
+            QMessageBox.No,
         )
 
         if answer != QMessageBox.Yes:
@@ -546,12 +810,13 @@ class AdminPackageWindow(QMainWindow):
         self.load_packages()
 
     # ==========================================
-    # Clear
+    # CLEAR
     # ==========================================
 
     def clear_form(self):
 
         self.selected_package = None
+        self.plans = []
 
         self.name.clear()
 
@@ -562,6 +827,218 @@ class AdminPackageWindow(QMainWindow):
         self.trade_copies.setValue(
             1
         )
-        self.price.setValue(
+
+        self.monthly_price.setValue(
             0.00
         )
+
+        self.lifetime_price.setValue(
+            0.00
+        )
+
+        self.update_button.setEnabled(
+            False
+        )
+
+        self.disable_button.setEnabled(
+            False
+        )
+
+    # ==========================================
+    # STYLESHEET
+    # ==========================================
+
+    def get_stylesheet(self):
+
+        return """
+        QMainWindow {
+            background-color: #05050F;
+        }
+
+        QWidget {
+            background-color: #05050F;
+            color: #F5F5F7;
+            font-family: "Segoe UI";
+            font-size: 13px;
+        }
+
+        QLabel#pageTitle {
+            font-size: 30px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        QLabel#pageSubtitle {
+            color: #8D8DAA;
+            font-size: 13px;
+        }
+
+        QLabel#statusBadge {
+            background-color: #061C18;
+            color: #00E89A;
+            border: 1px solid #087653;
+            border-radius: 14px;
+            padding: 16px 24px;
+            font-weight: 700;
+            min-width: 130px;
+        }
+
+        QGroupBox#sectionBox {
+            background-color: #070711;
+            border: 1px solid #29293D;
+            border-radius: 16px;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        QGroupBox#sectionBox::title {
+            color: #C34CFF;
+            subcontrol-origin: margin;
+            left: 18px;
+            padding: 0 8px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        QLineEdit,
+        QSpinBox,
+        QDoubleSpinBox {
+            background-color: #070711;
+            color: #F5F5F7;
+            border: 1px solid #303044;
+            border-radius: 9px;
+            padding: 11px 12px;
+            selection-background-color: #713CFF;
+        }
+
+        QLineEdit:focus,
+        QSpinBox:focus,
+        QDoubleSpinBox:focus {
+            border: 1px solid #A83CFF;
+        }
+
+        QFormLayout QLabel {
+            color: #B8B8D0;
+            font-weight: 600;
+        }
+
+        QPushButton {
+            min-height: 38px;
+            border-radius: 9px;
+            padding: 0 18px;
+            font-weight: 700;
+        }
+
+        QPushButton#primaryButton {
+            background-color: #168FEF;
+            color: white;
+            border: 1px solid #168FEF;
+        }
+
+        QPushButton#primaryButton:hover {
+            background-color: #257CFF;
+        }
+
+        QPushButton#updateButton {
+            background-color: #14142A;
+            color: #4FA0FF;
+            border: 1px solid #397FFF;
+        }
+
+        QPushButton#updateButton:hover {
+            background-color: #1A1A35;
+        }
+
+        QPushButton#dangerButton {
+            background-color: #210B16;
+            color: #FF4F78;
+            border: 1px solid #D51F58;
+        }
+
+        QPushButton#dangerButton:hover {
+            background-color: #351020;
+        }
+
+        QPushButton#secondaryButton {
+            background-color: #0B0B18;
+            color: #E7E7EF;
+            border: 1px solid #3A3A50;
+        }
+
+        QPushButton#secondaryButton:hover {
+            border: 1px solid #8A3CFF;
+        }
+
+        QPushButton#editButton {
+            background-color: #0A0A16;
+            color: #FFFFFF;
+            border: 1px solid #7A3CFF;
+            min-width: 70px;
+        }
+
+        QPushButton#editButton:hover {
+            background-color: #17132A;
+        }
+
+        QLabel#listStatus {
+            color: #8D8DAA;
+            padding: 4px 4px 8px 4px;
+        }
+
+        QLabel#tableHeader {
+            color: #747493;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        QWidget#packageRow {
+            background-color: #080812;
+            border: 1px solid #28283D;
+            border-radius: 12px;
+        }
+
+        QWidget#packageRow:hover {
+            border: 1px solid #6034A0;
+            background-color: #0B0B17;
+        }
+
+        QLabel#packageName {
+            color: #FFFFFF;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        QLabel#packageId,
+        QLabel#packageDetails {
+            color: #8585A4;
+            font-size: 12px;
+        }
+
+        QScrollArea {
+            background-color: transparent;
+            border: none;
+        }
+
+        QMessageBox {
+            background-color: #070711;
+            color: #F5F5F7;
+        }
+
+        QMessageBox QLabel {
+            color: #E8E8F0;
+        }
+
+        QMessageBox QPushButton {
+            background-color: #080814;
+            color: #FFFFFF;
+            border: 1px solid #00D9FF;
+            border-radius: 8px;
+            padding: 8px 22px;
+            min-width: 60px;
+        }
+
+        QMessageBox QPushButton:hover {
+            background-color: #17172A;
+            border: 1px solid #B83CFF;
+        }
+        """
