@@ -8,8 +8,9 @@ class SubscriptionCreate(BaseModel):
     user_id: int
     package_id: int
     plan_id: int
-    approved_by: int
+    approved_by: int | None = None
     status: str
+    is_trial: bool = False
 
 
 class SubscriptionResponse(BaseModel):
@@ -19,6 +20,7 @@ class SubscriptionResponse(BaseModel):
     plan_id: int
     status: str
     payment_status: str
+    is_trial: bool = False
     payment_slip: str | None
     payment_submitted_at: datetime | None
     start_date: datetime | None
