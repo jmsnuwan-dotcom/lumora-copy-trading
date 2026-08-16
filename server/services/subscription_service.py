@@ -127,9 +127,9 @@ class SubscriptionService:
                 "No subscription found."
             )
 
-        # ==========================================
+        # ==================================================
         # FIRST PAYMENT
-        # ==========================================
+        # ==================================================
 
         if (
             subscription.status == "PENDING"
@@ -138,9 +138,9 @@ class SubscriptionService:
 
             subscription.is_trial = is_trial
 
-        # ==========================================
+        # ==================================================
         # REMAINING 50% AFTER TRIAL
-        # ==========================================
+        # ==================================================
 
         elif (
             subscription.status == "EXPIRED"
@@ -183,6 +183,7 @@ class SubscriptionService:
         db.refresh(subscription)
 
         return subscription
+
     @staticmethod
     def get_pending_payments(
         db: Session,
@@ -198,10 +199,11 @@ class SubscriptionService:
                 Subscription.status == "PENDING",
                 Subscription.payment_status == "SUBMITTED",
             )
-            .order_by(Subscription.payment_submitted_at.desc())
+            .order_by(
+                Subscription.payment_submitted_at.desc()
+            )
             .all()
         )
-
 
     @staticmethod
     def approve_payment(
@@ -252,21 +254,27 @@ class SubscriptionService:
 
         now = datetime.now(UTC)
 
-        # ==========================================
+        # ==================================================
         # FIRST PAYMENT → START 24H TRIAL
-        # ==========================================
+        #
+        # First trial payment has:
+        # is_trial = True
+        # trial_started_at = None
+        # trial_ends_at = None
+        # ==================================================
 
         if (
             subscription.is_trial
-            and subscription.trial_started_at is None
+            and subscription.trial_ends_at is None
         ):
 
             subscription.trial_started_at = now
+
             subscription.trial_ends_at = (
                 now + timedelta(hours=24)
             )
 
-            # Normal package must NOT start yet.
+            # Normal paid package must NOT start.
             subscription.start_date = None
             subscription.end_date = None
 
@@ -277,9 +285,23 @@ class SubscriptionService:
             user.status = "active"
             user.is_active = True
 
-        # ==========================================
-        # REMAINING 50% AFTER TRIAL
-        # ==========================================
+            print(
+                "24H TRIAL STARTED:",
+                subscription.user_id,
+            )
+
+        # ==================================================
+        # REMAINING 50% PAYMENT AFTER TRIAL
+        #
+        # IMPORTANT:
+        # trial_ends_at is still present here.
+        # process_expired_trials() only changes status
+        # to EXPIRED and clears trial_started_at.
+        #
+        # Therefore:
+        # is_trial=True + trial_ends_at != None
+        # means this is the remaining payment.
+        # ==================================================
 
         elif (
             subscription.is_trial
@@ -298,11 +320,16 @@ class SubscriptionService:
                     "Trial has not expired yet."
                 )
 
+            # ----------------------------------------------
             # Trial is finished.
-            # Remaining payment is approved,
-            # but normal package must NOT start yet.
+            # Remaining 50% payment is approved.
+            #
+            # DO NOT start normal package here.
+            # Admin must manually activate the package.
+            # ----------------------------------------------
 
             subscription.is_trial = False
+
             subscription.trial_started_at = None
             subscription.trial_ends_at = None
 
@@ -316,9 +343,15 @@ class SubscriptionService:
             user.status = "active"
             user.is_active = True
 
-        # ==========================================
-        # NORMAL EXISTING PAYMENT
-        # ==========================================
+            print(
+                "REMAINING PAYMENT APPROVED - "
+                "WAITING FOR PACKAGE ACTIVATION:",
+                subscription.user_id,
+            )
+
+        # ==================================================
+        # NORMAL PAYMENT
+        # ==================================================
 
         else:
 
@@ -326,11 +359,17 @@ class SubscriptionService:
             subscription.status = "APPROVED"
             subscription.payment_status = "APPROVED"
             subscription.approved_by = admin_id
+
             subscription.start_date = None
             subscription.end_date = None
 
             user.status = "active"
             user.is_active = True
+
+            print(
+                "NORMAL PAYMENT APPROVED:",
+                subscription.user_id,
+            )
 
         db.commit()
         db.refresh(subscription)
@@ -383,24 +422,22 @@ class SubscriptionService:
 
         now = datetime.now(UTC)
 
-        # Normal package must NOT start during trial.
-        package_start = None
-        package_end = None
+        # ==================================================
+        # ADMIN 24H TRIAL
+        # ==================================================
 
-        subscription.start_date = package_start
-        subscription.end_date = package_end
+        subscription.start_date = None
+        subscription.end_date = None
 
         subscription.is_trial = True
+
         subscription.trial_started_at = now
+
         subscription.trial_ends_at = (
             now + timedelta(hours=24)
         )
 
         subscription.approved_by = admin_id
-
-        # Normal package starts after the 24-hour trial.
-        subscription.start_date = package_start
-        subscription.end_date = package_end
 
         subscription.status = "ACTIVE"
         subscription.payment_status = "APPROVED"
@@ -410,6 +447,11 @@ class SubscriptionService:
 
         db.commit()
         db.refresh(subscription)
+
+        print(
+            "ADMIN 24H TRIAL STARTED:",
+            subscription.user_id,
+        )
 
         return subscription
 
@@ -437,7 +479,9 @@ class SubscriptionService:
 
         plan = (
             db.query(Plan)
-            .filter(Plan.id == subscription.plan_id)
+            .filter(
+                Plan.id == subscription.plan_id
+            )
             .first()
         )
 
@@ -458,12 +502,18 @@ class SubscriptionService:
         subscription.status = "ACTIVE"
         subscription.is_trial = False
         subscription.approved_by = admin_id
+
+        subscription.trial_started_at = None
+        subscription.trial_ends_at = None
+
         subscription.start_date = now
         subscription.end_date = end_date
 
         user = (
             db.query(User)
-            .filter(User.id == subscription.user_id)
+            .filter(
+                User.id == subscription.user_id
+            )
             .first()
         )
 
@@ -478,6 +528,15 @@ class SubscriptionService:
         db.commit()
         db.refresh(subscription)
 
+        print(
+            "NORMAL PACKAGE ACTIVATED:",
+            subscription.user_id,
+            "START:",
+            subscription.start_date,
+            "END:",
+            subscription.end_date,
+        )
+
         return subscription
 
     @staticmethod
@@ -491,11 +550,16 @@ class SubscriptionService:
                 joinedload(Subscription.package),
                 joinedload(Subscription.plan),
             )
-            .join(User, Subscription.user_id == User.id)
+            .join(
+                User,
+                Subscription.user_id == User.id,
+            )
             .filter(
                 User.role == "user",
             )
-            .order_by(User.id.desc())
+            .order_by(
+                User.id.desc()
+            )
             .all()
         )
 
@@ -530,9 +594,17 @@ class SubscriptionService:
             if trial_ends_at > now:
                 continue
 
-            # Trial expired.
-            # Keep is_trial=True so the system knows
-            # remaining 50% payment is required.
+            # ==================================================
+            # TRIAL EXPIRED
+            #
+            # IMPORTANT:
+            # Keep:
+            #   is_trial = True
+            #   trial_ends_at = original expiry
+            #
+            # This allows the remaining 50% payment flow
+            # to identify this as a second payment.
+            # ==================================================
 
             subscription.status = "EXPIRED"
 
@@ -541,13 +613,15 @@ class SubscriptionService:
             changed = True
 
             print(
-                "TRIAL EXPIRED - REMAINING PAYMENT REQUIRED:",
+                "TRIAL EXPIRED - "
+                "REMAINING PAYMENT REQUIRED:",
                 subscription.user_id,
                 subscription.package_id,
             )
 
         if changed:
             db.commit()
+
     @staticmethod
     def process_expired_packages(
         db: Session,
@@ -647,9 +721,9 @@ class SubscriptionService:
             if not package.is_active:
                 continue
 
-            # ------------------------------------------
+            # ==================================================
             # 24H TRIAL
-            # ------------------------------------------
+            # ==================================================
 
             if subscription.is_trial:
 
@@ -666,19 +740,15 @@ class SubscriptionService:
                 if trial_ends_at <= now:
                     continue
 
-                # ==========================================
-                # 24H TRIAL SETTINGS
-                # ==========================================
-
                 active_subscribers.append(
                     subscription
                 )
 
                 continue
 
-            # ------------------------------------------
+            # ==================================================
             # NORMAL PAID PACKAGE
-            # ------------------------------------------
+            # ==================================================
 
             if not subscription.start_date:
                 continue
