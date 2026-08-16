@@ -66,6 +66,9 @@ class SubscriptionService:
             payment_submitted_at=None,
             start_date=None,
             end_date=None,
+            is_trial=request.is_trial,
+            trial_started_at=None,
+            trial_ends_at=None,
         )
 
         db.add(subscription)
@@ -106,6 +109,7 @@ class SubscriptionService:
         db: Session,
         user_id: int,
         payment_slip: str,
+        is_trial: bool = False,
     ):
         now = datetime.now(UTC)
 
@@ -123,18 +127,26 @@ class SubscriptionService:
                 "No subscription found."
             )
 
-        # Normal payment flow
+        # ==========================================
+        # FIRST PAYMENT
+        # ==========================================
+
         if (
             subscription.status == "PENDING"
             and subscription.payment_status == "NOT_PAID"
         ):
-            pass
 
-        # Expired trial payment flow
+            subscription.is_trial = is_trial
+
+        # ==========================================
+        # REMAINING 50% AFTER TRIAL
+        # ==========================================
+
         elif (
             subscription.status == "EXPIRED"
             and subscription.is_trial
         ):
+
             if not subscription.trial_ends_at:
                 raise ValueError(
                     "Trial expiration date not found."
@@ -214,7 +226,9 @@ class SubscriptionService:
 
         user = (
             db.query(User)
-            .filter(User.id == subscription.user_id)
+            .filter(
+                User.id == subscription.user_id
+            )
             .first()
         )
 
@@ -225,7 +239,9 @@ class SubscriptionService:
 
         plan = (
             db.query(Plan)
-            .filter(Plan.id == subscription.plan_id)
+            .filter(
+                Plan.id == subscription.plan_id
+            )
             .first()
         )
 
@@ -234,18 +250,90 @@ class SubscriptionService:
                 "Plan not found."
             )
 
-        start_date = None
-        end_date = None
+        now = datetime.now(UTC)
 
-        subscription.is_trial = False
-        subscription.status = "APPROVED"
-        subscription.payment_status = "APPROVED"
-        subscription.approved_by = admin_id
-        subscription.start_date = None
-        subscription.end_date = None
+        # ==========================================
+        # FIRST PAYMENT → START 24H TRIAL
+        # ==========================================
 
-        user.status = "active"
-        user.is_active = True
+        if (
+            subscription.is_trial
+            and subscription.trial_started_at is None
+        ):
+
+            subscription.trial_started_at = now
+            subscription.trial_ends_at = (
+                now + timedelta(hours=24)
+            )
+
+            # Normal package must NOT start yet.
+            subscription.start_date = None
+            subscription.end_date = None
+
+            subscription.status = "ACTIVE"
+            subscription.payment_status = "APPROVED"
+            subscription.approved_by = admin_id
+
+            user.status = "active"
+            user.is_active = True
+
+        # ==========================================
+        # REMAINING 50% → START NORMAL PACKAGE
+        # ==========================================
+
+        elif (
+            subscription.is_trial
+            and subscription.trial_ends_at is not None
+        ):
+
+            trial_ends_at = subscription.trial_ends_at
+
+            if trial_ends_at.tzinfo is None:
+                trial_ends_at = trial_ends_at.replace(
+                    tzinfo=UTC
+                )
+
+            if trial_ends_at > now:
+                raise ValueError(
+                    "Trial has not expired yet."
+                )
+
+            end_date = None
+
+            if plan.duration_days:
+                end_date = now + timedelta(
+                    days=plan.duration_days
+                )
+
+            subscription.is_trial = False
+            subscription.trial_started_at = None
+            subscription.trial_ends_at = None
+
+            subscription.status = "ACTIVE"
+            subscription.payment_status = "APPROVED"
+            subscription.approved_by = admin_id
+
+            subscription.start_date = now
+            subscription.end_date = end_date
+
+            user.status = "active"
+            user.is_active = True
+
+        # ==========================================
+        # NORMAL EXISTING PAYMENT
+        # ==========================================
+
+        else:
+
+            subscription.is_trial = False
+            subscription.status = "APPROVED"
+            subscription.payment_status = "APPROVED"
+            subscription.approved_by = admin_id
+            subscription.start_date = None
+            subscription.end_date = None
+
+            user.status = "active"
+            user.is_active = True
 
         db.commit()
         db.refresh(subscription)
@@ -298,15 +386,12 @@ class SubscriptionService:
 
         now = datetime.now(UTC)
 
-        # Save the normal package period after the trial.
-        package_start = now + timedelta(hours=24)
-
+        # Normal package must NOT start during trial.
+        package_start = None
         package_end = None
 
-        if plan.duration_days:
-            package_end = package_start + timedelta(
-                days=plan.duration_days
-            )
+        subscription.start_date = package_start
+        subscription.end_date = package_end
 
         subscription.is_trial = True
         subscription.trial_started_at = now
@@ -448,40 +533,24 @@ class SubscriptionService:
             if trial_ends_at > now:
                 continue
 
-            subscription.is_trial = False
+            # Trial expired.
+            # Keep is_trial=True so the system knows
+            # remaining 50% payment is required.
+
+            subscription.status = "EXPIRED"
 
             subscription.trial_started_at = None
-            subscription.trial_ends_at = None
-
-            # Normal paid package was already scheduled
-            # by give_trial().
-            if subscription.start_date is None:
-                continue
-
-            start_date = subscription.start_date
-
-            if start_date.tzinfo is None:
-                start_date = start_date.replace(
-                    tzinfo=UTC
-                )
-
-            if start_date > now:
-                continue
-
-            # Normal package is now active.
-            subscription.status = "ACTIVE"
 
             changed = True
 
             print(
-                "TRIAL EXPIRED - PACKAGE STARTED:",
+                "TRIAL EXPIRED - REMAINING PAYMENT REQUIRED:",
                 subscription.user_id,
                 subscription.package_id,
             )
 
         if changed:
             db.commit()
-
     @staticmethod
     def process_expired_packages(
         db: Session,
@@ -600,9 +669,14 @@ class SubscriptionService:
                 if trial_ends_at <= now:
                     continue
 
+                # ==========================================
+                # 24H TRIAL SETTINGS
+                # ==========================================
+
                 active_subscribers.append(
                     subscription
                 )
+
                 continue
 
             # ------------------------------------------
