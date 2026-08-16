@@ -227,8 +227,16 @@ class DashboardService:
 
             "package": package.name,
             "plan": plan.name,
-            "lot_size": float(
-                package.lot_size
+            "lot_size": (
+                0.01
+                if subscription.is_trial
+                else float(package.lot_size)
+            ),
+
+            "trade_copies": (
+                1
+                if subscription.is_trial
+                else int(package.trades_per_signal)
             ),
 
             "status": subscription.status,
