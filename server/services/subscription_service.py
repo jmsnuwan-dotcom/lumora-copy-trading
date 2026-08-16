@@ -278,7 +278,7 @@ class SubscriptionService:
             user.is_active = True
 
         # ==========================================
-        # REMAINING 50% → START NORMAL PACKAGE
+        # REMAINING 50% AFTER TRIAL
         # ==========================================
 
         elif (
@@ -298,23 +298,20 @@ class SubscriptionService:
                     "Trial has not expired yet."
                 )
 
-            end_date = None
-
-            if plan.duration_days:
-                end_date = now + timedelta(
-                    days=plan.duration_days
-                )
+            # Trial is finished.
+            # Remaining payment is approved,
+            # but normal package must NOT start yet.
 
             subscription.is_trial = False
             subscription.trial_started_at = None
             subscription.trial_ends_at = None
 
-            subscription.status = "ACTIVE"
+            subscription.status = "APPROVED"
             subscription.payment_status = "APPROVED"
             subscription.approved_by = admin_id
 
-            subscription.start_date = now
-            subscription.end_date = end_date
+            subscription.start_date = None
+            subscription.end_date = None
 
             user.status = "active"
             user.is_active = True
