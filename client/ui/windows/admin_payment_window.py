@@ -617,9 +617,11 @@ class AdminPaymentWindow(QMainWindow):
         )
 
         row_layout = QVBoxLayout(row)
+
         row_layout.setContentsMargins(
             16, 14, 16, 14
         )
+
         row_layout.setSpacing(8)
 
         name_button = QPushButton(
@@ -650,9 +652,11 @@ class AdminPaymentWindow(QMainWindow):
         details_layout = QVBoxLayout(
             details
         )
+
         details_layout.setContentsMargins(
             10, 8, 10, 5
         )
+
         details_layout.setSpacing(6)
 
         details_layout.addWidget(
@@ -679,9 +683,43 @@ class AdminPaymentWindow(QMainWindow):
             )
         )
 
+        # =====================================================
+        # PAYMENT INFORMATION
+        # =====================================================
+
+        payment_type = payment.get(
+            "payment_type",
+            "Normal Payment",
+        )
+
+        amount_paid = payment.get(
+            "amount_paid",
+            0,
+        )
+
+        full_package_price = payment.get(
+            "full_package_price",
+            0,
+        )
+
         details_layout.addWidget(
             QLabel(
-                f"Amount : {payment['amount']}"
+                f"Payment Type : "
+                f"{payment_type}"
+            )
+        )
+
+        details_layout.addWidget(
+            QLabel(
+                f"Amount Paid : "
+                f"${float(amount_paid):.2f}"
+            )
+        )
+
+        details_layout.addWidget(
+            QLabel(
+                f"Full Package Price : "
+                f"${float(full_package_price):.2f}"
             )
         )
 
@@ -691,24 +729,9 @@ class AdminPaymentWindow(QMainWindow):
                 f"{payment['payment_status']}"
             )
         )
-
-        details_layout.addWidget(
-            QLabel(
-                f"Submitted At : "
-                f"{payment['payment_submitted_at']}"
-            )
-        )
-
-        slip_label = QLabel(
-            f"Payment Slip : "
-            f"{payment['payment_slip']}"
-        )
-
-        slip_label.setWordWrap(True)
-
-        details_layout.addWidget(
-            slip_label
-        )
+        # =====================================================
+        # VIEW PAYMENT SLIP
+        # =====================================================
 
         view_slip_button = QPushButton(
             "VIEW PAYMENT SLIP"
@@ -740,6 +763,10 @@ class AdminPaymentWindow(QMainWindow):
             view_slip_button
         )
 
+        # =====================================================
+        # ACCEPT PAYMENT
+        # =====================================================
+
         accept_button = QPushButton(
             "ACCEPT PAYMENT"
         )
@@ -770,6 +797,10 @@ class AdminPaymentWindow(QMainWindow):
         details_layout.addWidget(
             accept_button
         )
+
+        # =====================================================
+        # TOGGLE DETAILS
+        # =====================================================
 
         def toggle_details():
 
@@ -806,7 +837,6 @@ class AdminPaymentWindow(QMainWindow):
         self.pending_layout.addWidget(
             row
         )
-
     # =========================================================
     # VIEW PAYMENT SLIP
     # =========================================================

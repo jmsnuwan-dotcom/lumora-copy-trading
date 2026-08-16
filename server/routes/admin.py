@@ -56,30 +56,85 @@ def get_pending_payments(
         SubscriptionService.get_pending_payments(db)
     )
 
-    return [
-        {
-            "id": subscription.id,
-            "user_id": subscription.user_id,
-            "full_name": subscription.user.full_name,
-            "email": subscription.user.email,
-            "phone_number": subscription.user.phone_number,
-            "package": subscription.package.name,
-            "plan": subscription.plan.name,
-            "duration_days": subscription.plan.duration_days,
-            "amount": (
-                subscription.plan.price / 2
-                if subscription.is_trial
-                else subscription.plan.price
-            ),
-            "payment_status": subscription.payment_status,
-            "payment_slip": subscription.payment_slip,
-            "payment_submitted_at": (
-                subscription.payment_submitted_at
-            ),
-        }
-        for subscription in subscriptions
-    ]
+    payments = []
 
+    for subscription in subscriptions:
+
+        # ==================================================
+        # PAYMENT TYPE
+        # ==================================================
+
+        if (
+            subscription.is_trial
+            and subscription.trial_ends_at is None
+        ):
+            payment_type = "24H Trial - First Payment"
+
+        elif (
+            subscription.is_trial
+            and subscription.trial_ends_at is not None
+        ):
+            payment_type = "Remaining Payment"
+
+        else:
+            payment_type = "Normal Payment"
+
+        # ==================================================
+        # PACKAGE PRICE
+        # ==================================================
+
+        full_package_price = subscription.plan.price
+
+        # ==================================================
+        # AMOUNT PAID
+        # ==================================================
+
+        if payment_type in {
+            "24H Trial - First Payment",
+            "Remaining Payment",
+        }:
+            amount_paid = full_package_price / 2
+
+        else:
+            amount_paid = full_package_price
+
+        # ==================================================
+        # RESPONSE
+        # ==================================================
+
+        payments.append(
+            {
+                "id": subscription.id,
+                "user_id": subscription.user_id,
+                "full_name": subscription.user.full_name,
+                "email": subscription.user.email,
+                "phone_number": subscription.user.phone_number,
+
+                "package": subscription.package.name,
+                "plan": subscription.plan.name,
+                "duration_days": (
+                    subscription.plan.duration_days
+                ),
+
+                "payment_type": payment_type,
+                "amount_paid": amount_paid,
+                "full_package_price": full_package_price,
+
+                "payment_status": (
+                    subscription.payment_status
+                ),
+
+                "payment_slip": (
+                    subscription.payment_slip
+                ),
+
+                "payment_submitted_at": (
+                    subscription.payment_submitted_at
+                ),
+            }
+        )
+
+    return payments
 
 @router.post(
     "/payments/{subscription_id}/approve",
