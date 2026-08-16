@@ -66,7 +66,11 @@ def get_pending_payments(
             "package": subscription.package.name,
             "plan": subscription.plan.name,
             "duration_days": subscription.plan.duration_days,
-            "amount": subscription.plan.price,
+            "amount": (
+                subscription.plan.price / 2
+                if subscription.is_trial
+                else subscription.plan.price
+            ),
             "payment_status": subscription.payment_status,
             "payment_slip": subscription.payment_slip,
             "payment_submitted_at": (
