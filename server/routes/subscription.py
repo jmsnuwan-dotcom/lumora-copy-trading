@@ -1,13 +1,6 @@
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    HTTPException,
-    UploadFile,
-)
 from sqlalchemy.orm import Session
 
 from server.database.db import get_db
@@ -22,6 +15,15 @@ from server.utils.dependencies import get_current_user
 
 from server.schemas.payment_settings import PaymentSettingsResponse
 from server.services.payment_settings_service import PaymentSettingsService
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
 
 
 router = APIRouter(
@@ -106,6 +108,7 @@ def get_my_subscription(
     response_model=SubscriptionResponse,
 )
 async def submit_payment(
+    is_trial: bool = Form(False),
     slip: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -158,6 +161,7 @@ async def submit_payment(
             db=db,
             user_id=current_user.id,
             payment_slip=str(file_path),
+            is_trial=is_trial,
         )
 
     except ValueError as e:
