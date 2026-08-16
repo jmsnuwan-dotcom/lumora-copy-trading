@@ -158,6 +158,21 @@ class TradeService:
                 continue
 
             # ==================================================
+            # TRIAL / NORMAL SETTINGS
+            # ==================================================
+
+            if subscription.is_trial:
+                trade_lot_size = 0.01
+                trade_copies = 1
+            else:
+                trade_lot_size = float(
+                    package.lot_size
+                )
+                trade_copies = int(
+                    package.trades_per_signal
+                )
+
+            # ==================================================
             # CLIENT MESSAGE
             # ==================================================
 
@@ -166,12 +181,8 @@ class TradeService:
                 "trade_id": trade_id,
                 "magic_number": magic_number,
                 "symbol": symbol,
-                "lot_size": float(
-                    package.lot_size
-                ),
-                "trade_copies": int(
-                    package.trades_per_signal
-                ),
+                "lot_size": trade_lot_size,
+                "trade_copies": trade_copies,
             }
 
             print("=" * 60)
@@ -179,11 +190,9 @@ class TradeService:
             print("USER        :", user.id)
             print("EMAIL       :", user.email)
             print("PACKAGE     :", package.name)
-            print("LOT SIZE    :", package.lot_size)
-            print(
-                "TRADE COPIES:",
-                package.trades_per_signal,
-            )
+            print("TRIAL       :", subscription.is_trial)
+            print("LOT SIZE    :", trade_lot_size)
+            print("TRADE COPIES:", trade_copies)
             print("MAGIC       :", magic_number)
             print("MESSAGE     :", message)
             print("=" * 60)

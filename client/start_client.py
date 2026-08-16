@@ -12,13 +12,6 @@ def start_client(
     mt5_server: str,
 ):
 
-    print("START_CLIENT 1")
-
-    print("MT5 LOGIN :", mt5_login)
-    print("MT5 SERVER:", mt5_server)
-
-    print("CONNECTING MT5")
-
     connected = MT5Client.connect(
         login=mt5_login,
         password=mt5_password,
@@ -26,18 +19,11 @@ def start_client(
     )
 
     if not connected:
-
-        print("MT5 Connection Failed")
-        print("Starting WebSocket without MT5...")
-
-    print("START_CLIENT 2")
-    print("MT5 Connected")
+        return
 
     HeartbeatAPI.send(
         token
     )
-
-    print("START_CLIENT 3")
 
     asyncio.run(
         WebSocketClient(
@@ -47,5 +33,3 @@ def start_client(
             mt5_server=mt5_server,
         ).start()
     )
-
-    print("START_CLIENT 4")

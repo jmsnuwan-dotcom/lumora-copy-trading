@@ -1046,6 +1046,28 @@ class DashboardWindow(QMainWindow):
         if data is None:
             return
 
+        print(
+            "DASHBOARD SUBSCRIPTION:",
+            "STATUS =", data.get("status"),
+            "IS_TRIAL =", data.get("is_trial"),
+            "TRIAL_ENDS_AT =", data.get("trial_ends_at"),
+            "START_DATE =", data.get("start_date"),
+            "EXPIRE_DATE =", data.get("expire_date"),
+        )
+
+        # ==========================================================
+        # EXPIRED TRIAL → REMAINING PAYMENT
+        # ==========================================================
+
+        if (
+            data.get("status") == "EXPIRED"
+            and data.get("is_trial") is True
+        ):
+            self.open_existing_payment(
+                remaining_payment=True
+            )
+            return
+
         self.name.setText(
             f"Name : {data['full_name']}"
         )
@@ -1108,6 +1130,7 @@ class DashboardWindow(QMainWindow):
                 f"Remaining Days : "
                 f"{data['remaining_days']}"
             )
+            
 
         if data.get("is_trial"):
 
@@ -1182,7 +1205,10 @@ class DashboardWindow(QMainWindow):
     # EXISTING PAYMENT
     # ==========================================================
 
-    def open_existing_payment(self):
+    def open_existing_payment(
+        self,
+        remaining_payment=False,
+    ):
 
         subscription = (
             SubscriptionAPI.get_my_subscription(
@@ -1251,6 +1277,10 @@ class DashboardWindow(QMainWindow):
             plan_name=plan_name,
             duration=duration,
             final_price=price,
+            remaining_payment=(
+                subscription.get("is_trial", False)
+                and subscription.get("status") == "EXPIRED"
+            ),
         )
 
         self.payment_window.show()

@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFrame,
     QScrollArea,
+    QCheckBox,
 )
 
 from client.api.payment_api import PaymentAPI
@@ -25,6 +26,8 @@ class PaymentWindow(QMainWindow):
         plan_name: str,
         duration: str,
         final_price: str,
+        remaining_payment: bool = False,
+        is_trial: bool = False,
     ):
         super().__init__()
 
@@ -33,6 +36,8 @@ class PaymentWindow(QMainWindow):
         self.plan_name = plan_name
         self.duration = duration
         self.final_price = final_price
+        self.is_trial = is_trial
+        self.remaining_payment = remaining_payment
 
         self.selected_file = None
         self.payment_submitted = False
@@ -142,6 +147,24 @@ class PaymentWindow(QMainWindow):
             "YOUR PACKAGE"
         )
 
+        if self.remaining_payment:
+
+            remaining_notice = QLabel(
+                "⚠ 24H TRIAL EXPIRED — REMAINING 50% PAYMENT REQUIRED"
+            )
+
+            remaining_notice.setAlignment(
+                Qt.AlignCenter
+            )
+
+            remaining_notice.setObjectName(
+                "remainingPaymentNotice"
+            )
+
+            subscription_layout.addWidget(
+                remaining_notice
+            )
+
         subscription_title.setObjectName(
             "sectionTitle"
         )
@@ -154,11 +177,47 @@ class PaymentWindow(QMainWindow):
             subscription_title
         )
 
+        if self.remaining_payment or self.is_trial:
+
+            try:
+                original_price = float(self.final_price)
+            except (TypeError, ValueError):
+                original_price = 0.0
+
+            half_price = original_price / 2
+
+            if self.remaining_payment:
+
+                subscription_text = (
+                    f"Package: {self.package_name}\n"
+                    f"Plan: {self.plan_name}\n"
+                    f"Duration: {self.duration}\n"
+                    f"Original Price: ${original_price:.2f}\n"
+                    f"Trial Payment (50%): ${half_price:.2f}\n"
+                    f"Remaining Payment (50%): ${half_price:.2f}"
+                )
+
+            else:
+
+                subscription_text = (
+                    f"Package: {self.package_name}\n"
+                    f"Plan: {self.plan_name}\n"
+                    f"Duration: {self.duration}\n"
+                    f"Original Price: ${original_price:.2f}\n"
+                    f"Trial Payment (50%): ${half_price:.2f}"
+                )
+
+        else:
+
+            subscription_text = (
+                f"Package: {self.package_name}\n"
+                f"Plan: {self.plan_name}\n"
+                f"Duration: {self.duration}\n"
+                f"Final Price: ${self.final_price}"
+            )
+
         self.subscription_details = QLabel(
-            f"Package: {self.package_name}\n"
-            f"Plan: {self.plan_name}\n"
-            f"Duration: {self.duration}\n"
-            f"Final Price: ${self.final_price}"
+            subscription_text
         )
 
         self.subscription_details.setAlignment(
@@ -172,6 +231,28 @@ class PaymentWindow(QMainWindow):
         subscription_layout.addWidget(
             self.subscription_details
         )
+
+        if self.remaining_payment:
+
+            self.trial_checkbox = None
+
+        else:
+
+            self.trial_checkbox = QCheckBox(
+                "24H Trial — Pay 50%"
+            )
+
+            self.trial_checkbox.setObjectName(
+                "trialCheckbox"
+            )
+
+            self.trial_checkbox.stateChanged.connect(
+                self.toggle_trial
+            )
+
+            subscription_layout.addWidget(
+                self.trial_checkbox
+            )
 
         main_layout.addWidget(
             subscription_card
@@ -814,6 +895,37 @@ class PaymentWindow(QMainWindow):
             f"Selected:\n{file_path}"
         )
 
+    def toggle_trial(self, state):
+        self.is_trial = bool(state)
+
+        print("TRIAL TOGGLE:", self.is_trial)
+
+        try:
+            price = float(self.final_price)
+        except (TypeError, ValueError):
+            return
+
+        if self.is_trial:
+
+            display_price = price / 2
+
+            self.subscription_details.setText(
+                f"Package: {self.package_name}\n"
+                f"Plan: {self.plan_name}\n"
+                f"Duration: {self.duration}\n"
+                f"Original Price: ${price:.2f}\n"
+                f"Trial Payment (50%): ${display_price:.2f}"
+            )
+
+        else:
+
+            self.subscription_details.setText(
+                f"Package: {self.package_name}\n"
+                f"Plan: {self.plan_name}\n"
+                f"Duration: {self.duration}\n"
+                f"Final Price: ${price:.2f}"
+            )
+
     def submit_payment(self):
 
         if self.payment_submitted:
@@ -829,9 +941,36 @@ class PaymentWindow(QMainWindow):
 
             return
 
+        # ==================================================
+        # GET TRIAL STATE DIRECTLY FROM CHECKBOX
+        # ==================================================
+
+        if self.remaining_payment:
+
+            trial_selected = False
+
+        elif self.trial_checkbox is not None:
+
+            trial_selected = (
+                self.trial_checkbox.isChecked()
+            )
+
+        else:
+
+            trial_selected = False
+
+        print(
+            "PAYMENT DEBUG:",
+            "REMAINING_PAYMENT =",
+            self.remaining_payment,
+            "TRIAL_SELECTED =",
+            trial_selected,
+        )
+
         result = PaymentAPI.submit_payment(
             token=self.token,
             file_path=self.selected_file,
+            is_trial=trial_selected,
         )
 
         if result is None:

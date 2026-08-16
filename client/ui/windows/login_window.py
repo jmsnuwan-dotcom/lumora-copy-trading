@@ -873,6 +873,29 @@ class LoginWindow(QMainWindow):
             )
         ).upper()
 
+        print(
+            "SUBSCRIPTION DEBUG:",
+            "STATUS =", status,
+            "IS_TRIAL =", subscription.get("is_trial"),
+            "TRIAL_ENDS_AT =", subscription.get("trial_ends_at"),
+        )
+
+        # ==========================================
+        # EXPIRED TRIAL → REMAINING PAYMENT
+        # ==========================================
+
+        if (
+            status == "PENDING"
+            and subscription.get("is_trial") is True
+            and subscription.get("trial_ends_at") is not None
+        ):
+            self.open_existing_payment(
+                subscription,
+                remaining_payment=True,
+            )
+
+            return
+
         # ==========================================
         # PAYMENT WAITING
         # ==========================================
@@ -908,7 +931,23 @@ class LoginWindow(QMainWindow):
             return
 
         # ==========================================
-        # UNKNOWN / EXPIRED / OTHER
+        # EXPIRED TRIAL → REMAINING PAYMENT
+        # ==========================================
+
+        if (
+            status == "EXPIRED"
+            and subscription.get("is_trial") is True
+        ):
+
+            self.open_pending_payment(
+                subscription,
+                remaining_payment=True,
+            )
+
+            return
+
+        # ==========================================
+        # UNKNOWN / OTHER
         # ==========================================
 
         self.open_package_selection()
@@ -930,6 +969,7 @@ class LoginWindow(QMainWindow):
     def open_pending_payment(
         self,
         subscription: dict,
+        remaining_payment: bool = False,
     ):
 
         package = subscription.get(
@@ -979,6 +1019,8 @@ class LoginWindow(QMainWindow):
             plan_name=plan_name,
             duration=duration,
             final_price=price,
+            is_trial=subscription.get("is_trial", False),
+            remaining_payment=remaining_payment,
         )
 
         self.payment_window.show()

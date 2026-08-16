@@ -24,6 +24,7 @@ class SubscriptionResponse(BaseModel):
     payment_slip: str | None
     payment_submitted_at: datetime | None
     start_date: datetime | None
+    trial_ends_at: datetime | None = None
     end_date: datetime | None
 
     package: PackageResponse | None = None

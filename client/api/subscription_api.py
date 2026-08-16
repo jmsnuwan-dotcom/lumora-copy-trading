@@ -42,6 +42,7 @@ class SubscriptionAPI:
         token: str,
         package_id: int,
         plan_id: int,
+        is_trial: bool = False,
     ):
 
         try:
@@ -54,6 +55,7 @@ class SubscriptionAPI:
                     "package_id": package_id,
                     "plan_id": plan_id,
                     "status": "PENDING",
+                    "is_trial": is_trial,
                 },
                 timeout=10,
             )

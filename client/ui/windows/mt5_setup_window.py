@@ -803,9 +803,7 @@ class MT5SetupWindow(QMainWindow):
                     symbol.path or ""
                 ).upper()
 
-                is_xau_usd = (
-                    "XAUUSD" in name
-                )
+                is_xau_usd = "XAUUSD" in name
 
                 is_gold_symbol = (
                     "GOLD" in name
@@ -813,24 +811,8 @@ class MT5SetupWindow(QMainWindow):
                     and "ETF" not in path
                 )
 
-                is_gold_description = (
-                    "GOLD" in description
-                    and (
-                        "METAL" in path
-                        or "SPOT" in path
-                    )
-                    and "STOCKS" not in path
-                    and "ETF" not in path
-                )
-
-                if (
-                    is_xau_usd
-                    or is_gold_symbol
-                    or is_gold_description
-                ):
-                    gold_symbols.append(
-                        symbol.name
-                    )
+                if is_xau_usd or is_gold_symbol:
+                    gold_symbols.append(symbol.name)
 
             self.gold_symbol.clear()
 

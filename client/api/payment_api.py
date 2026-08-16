@@ -9,6 +9,7 @@ class PaymentAPI:
     def submit_payment(
         token: str,
         file_path: str,
+        is_trial: bool = False,
     ):
 
         try:
@@ -17,6 +18,9 @@ class PaymentAPI:
                     f"{API_URL}/subscriptions/payment",
                     headers={
                         "Authorization": f"Bearer {token}",
+                    },
+                    data={
+                        "is_trial": str(is_trial).lower(),
                     },
                     files={
                         "slip": payment_file,
