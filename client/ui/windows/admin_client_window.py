@@ -1,3 +1,5 @@
+from typing import Optional
+
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QFrame,
@@ -89,7 +91,7 @@ class AdminClientWindow(QMainWindow):
             self.load_clients
         )
 
-        self.refresh_timer.start(30000)
+        self.refresh_timer.start(60000)
 
     # ==========================================================
     # UI
@@ -898,7 +900,7 @@ class AdminClientWindow(QMainWindow):
 
     def give_trial(
         self,
-        subscription_id: int | None,
+        subscription_id: Optional[int],
     ):
 
         if subscription_id is None:
@@ -940,7 +942,7 @@ class AdminClientWindow(QMainWindow):
 
     def activate_package(
         self,
-        subscription_id: int | None,
+        subscription_id: Optional[int],
     ):
 
         if subscription_id is None:

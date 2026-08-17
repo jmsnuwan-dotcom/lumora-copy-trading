@@ -423,7 +423,7 @@ class AdminPaymentWindow(QMainWindow):
             self.load_pending_payments
         )
 
-        self.refresh_timer.start(30000)
+        self.refresh_timer.start(60000)
 
     # =========================================================
     # PAYMENT SETTINGS

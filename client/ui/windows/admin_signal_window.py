@@ -36,7 +36,7 @@ class AdminSignalWindow(QMainWindow):
         self.refresh_timer.timeout.connect(
             self.refresh_data
         )
-        self.refresh_timer.start(10000)
+        self.refresh_timer.start(30000)
 
     def init_ui(self):
 
