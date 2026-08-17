@@ -1,6 +1,8 @@
 from pathlib import Path
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+
 
 # --------------------------------------------------
 # Load Environment Variables
@@ -8,7 +10,10 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(
+    BASE_DIR / ".env"
+)
+
 
 # --------------------------------------------------
 # Application
@@ -17,18 +22,25 @@ load_dotenv(BASE_DIR / ".env")
 APP_NAME = "Lumora Copy Trading Platform"
 APP_VERSION = "1.0.0"
 
+
 # --------------------------------------------------
 # Security
 # --------------------------------------------------
 
 SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "CHANGE_THIS_SECRET_BEFORE_PRODUCTION"
+    "SECRET_KEY"
 )
+
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is required."
+    )
+
 
 ALGORITHM = "HS256"
 
 ACCESS_TOKEN_EXPIRE_HOURS = 24
+
 
 # --------------------------------------------------
 # Database
@@ -36,8 +48,9 @@ ACCESS_TOKEN_EXPIRE_HOURS = 24
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    f"sqlite:///{BASE_DIR}/storage/lumora.db"
+    f"sqlite:///{BASE_DIR}/storage/lumora.db",
 )
+
 
 # --------------------------------------------------
 # WebSocket
@@ -45,12 +58,28 @@ DATABASE_URL = os.getenv(
 
 WEBSOCKET_PATH = "/ws"
 
+
 # --------------------------------------------------
 # Server
 # --------------------------------------------------
 
-HOST = "127.0.0.1"
+HOST = os.getenv(
+    "HOST",
+    "0.0.0.0",
+)
 
-PORT = 8000
+PORT = int(
+    os.getenv(
+        "PORT",
+        "8000",
+    )
+)
 
-DEBUG = True
+DEBUG = os.getenv(
+    "DEBUG",
+    "False",
+).lower() in {
+    "1",
+    "true",
+    "yes",
+}
