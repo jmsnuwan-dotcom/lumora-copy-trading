@@ -134,7 +134,7 @@ class AdminDashboardWindow(QMainWindow):
             self.load_dashboard_stats
         )
 
-        self.refresh_timer.start(5000)
+        self.refresh_timer.start(60000)
 
         self.load_quick_running_signals()
 
