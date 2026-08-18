@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from client.api.admin_api import AdminAPI
 
 from client.ui.windows.admin_client_window import (
@@ -32,6 +33,10 @@ from client.ui.windows.admin_signal_window import (
     AdminSignalWindow,
 )
 
+from client.ui.windows.admin_online_window import (
+    AdminOnlineWindow,
+)
+
 
 class AdminDashboardWindow(QMainWindow):
 
@@ -41,6 +46,7 @@ class AdminDashboardWindow(QMainWindow):
         self.token = token
 
         self.client_window = None
+        self.online_window = None
         self.package_window = None
         self.payment_window = None
         self.signal_window = None
@@ -187,7 +193,9 @@ class AdminDashboardWindow(QMainWindow):
 
         sidebar_layout.setSpacing(8)
 
-        logo = QLabel("LUMORA")
+        logo = QLabel(
+            "LUMORA"
+        )
 
         logo.setAlignment(
             Qt.AlignCenter
@@ -260,9 +268,9 @@ class AdminDashboardWindow(QMainWindow):
             28
         )
 
-        # ------------------------------------------------------
-        # Navigation
-        # ------------------------------------------------------
+        # ======================================================
+        # NAVIGATION
+        # ======================================================
 
         dashboard_button = self.create_nav_button(
             "Dashboard",
@@ -271,6 +279,10 @@ class AdminDashboardWindow(QMainWindow):
 
         clients_button = self.create_nav_button(
             "Clients"
+        )
+
+        online_button = self.create_nav_button(
+            "Online Users"
         )
 
         packages_button = self.create_nav_button(
@@ -289,8 +301,16 @@ class AdminDashboardWindow(QMainWindow):
             "Settings"
         )
 
+        # ------------------------------------------------------
+        # Navigation connections
+        # ------------------------------------------------------
+
         clients_button.clicked.connect(
             self.open_clients
+        )
+
+        online_button.clicked.connect(
+            self.open_online_users
         )
 
         packages_button.clicked.connect(
@@ -305,12 +325,20 @@ class AdminDashboardWindow(QMainWindow):
             self.open_signals
         )
 
+        # ------------------------------------------------------
+        # Navigation order
+        # ------------------------------------------------------
+
         sidebar_layout.addWidget(
             dashboard_button
         )
 
         sidebar_layout.addWidget(
             clients_button
+        )
+
+        sidebar_layout.addWidget(
+            online_button
         )
 
         sidebar_layout.addWidget(
@@ -330,6 +358,10 @@ class AdminDashboardWindow(QMainWindow):
         )
 
         sidebar_layout.addStretch()
+
+        # ======================================================
+        # FOOTER
+        # ======================================================
 
         footer = QLabel(
             "LUMORA AI TRADING\nADMINISTRATOR"
@@ -371,7 +403,9 @@ class AdminDashboardWindow(QMainWindow):
             24,
         )
 
-        content_layout.setSpacing(18)
+        content_layout.setSpacing(
+            18
+        )
 
         # ======================================================
         # HEADER
@@ -465,26 +499,36 @@ class AdminDashboardWindow(QMainWindow):
 
         cards_layout = QHBoxLayout()
 
-        cards_layout.setSpacing(14)
-
-        self.total_clients_card = self.create_stat_card(
-            "TOTAL CLIENTS",
-            "0",
+        cards_layout.setSpacing(
+            14
         )
 
-        self.active_clients_card = self.create_stat_card(
-            "ACTIVE CLIENTS",
-            "0",
+        self.total_clients_card = (
+            self.create_stat_card(
+                "TOTAL CLIENTS",
+                "0",
+            )
         )
 
-        self.pending_payments_card = self.create_stat_card(
-            "PENDING PAYMENTS",
-            "0",
+        self.active_clients_card = (
+            self.create_stat_card(
+                "ACTIVE CLIENTS",
+                "0",
+            )
         )
 
-        self.running_signals_card = self.create_stat_card(
-            "RUNNING SIGNALS",
-            "0",
+        self.pending_payments_card = (
+            self.create_stat_card(
+                "PENDING PAYMENTS",
+                "0",
+            )
+        )
+
+        self.running_signals_card = (
+            self.create_stat_card(
+                "RUNNING SIGNALS",
+                "0",
+            )
         )
 
         cards_layout.addWidget(
@@ -536,6 +580,7 @@ class AdminDashboardWindow(QMainWindow):
             self.database_status,
             self.websocket_status,
         ):
+
             label.setStyleSheet(
                 """
                 QLabel {
@@ -588,7 +633,9 @@ class AdminDashboardWindow(QMainWindow):
             "Trade ID"
         )
 
-        self.quick_running_signal = QComboBox()
+        self.quick_running_signal = (
+            QComboBox()
+        )
 
         self.quick_running_signal.addItem(
             "No running signal",
@@ -715,9 +762,9 @@ class AdminDashboardWindow(QMainWindow):
             sidebar
         )
 
-        # ------------------------------------------------------
+        # ======================================================
         # SCROLLABLE CONTENT
-        # ------------------------------------------------------
+        # ======================================================
 
         content_scroll = QScrollArea()
 
@@ -787,6 +834,7 @@ class AdminDashboardWindow(QMainWindow):
         self.setCentralWidget(
             page
         )
+
     # ==========================================================
     # UI HELPERS
     # ==========================================================
@@ -1176,6 +1224,16 @@ class AdminDashboardWindow(QMainWindow):
         self.client_window.show()
         self.client_window.raise_()
         self.client_window.activateWindow()
+
+    def open_online_users(self):
+
+        self.online_window = AdminOnlineWindow(
+            self.token
+        )
+
+        self.online_window.show()
+        self.online_window.raise_()
+        self.online_window.activateWindow()
 
     def open_packages(self):
 

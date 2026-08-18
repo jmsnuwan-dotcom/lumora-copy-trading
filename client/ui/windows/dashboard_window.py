@@ -543,11 +543,21 @@ class DashboardWindow(QMainWindow):
             "Connection : -"
         )
 
+        self.balance = QLabel(
+            "Balance : -"
+        )
+
+        self.equity = QLabel(
+            "Equity : -"
+        )
+
         for label in (
             self.name,
             self.email,
             self.status,
             self.connection_status,
+            self.balance,
+            self.equity,
         ):
 
             label.setObjectName(
@@ -572,6 +582,14 @@ class DashboardWindow(QMainWindow):
 
         account_layout.addWidget(
             self.connection_status
+        )
+
+        account_layout.addWidget(
+            self.balance
+        )
+
+        account_layout.addWidget(
+            self.equity
         )
 
         top_cards.addWidget(
@@ -1092,6 +1110,27 @@ class DashboardWindow(QMainWindow):
             f"Connection : "
             f"{data['connection_status']}"
         )
+
+        balance = data.get("balance")
+        equity = data.get("equity")
+
+        if balance is not None:
+            self.balance.setText(
+                f"Balance : ${float(balance):,.2f}"
+            )
+        else:
+            self.balance.setText(
+                "Balance : -"
+            )
+
+        if equity is not None:
+            self.equity.setText(
+                f"Equity : ${float(equity):,.2f}"
+            )
+        else:
+            self.equity.setText(
+                "Equity : -"
+            )
 
         self.package.setText(
             f"Package : {data['package']}"
