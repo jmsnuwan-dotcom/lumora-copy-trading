@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from PySide6.QtCore import QPointF, Qt, QTimer
 from PySide6.QtGui import QFont, QPainter, QPen
@@ -1344,7 +1344,7 @@ class DashboardWindow(QMainWindow):
 
             return
 
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
 
         remaining_seconds = int(
             (
@@ -1411,7 +1411,7 @@ class DashboardWindow(QMainWindow):
             if parsed.tzinfo is None:
 
                 parsed = parsed.replace(
-                    tzinfo=UTC
+                    tzinfo=timezone.utc
                 )
 
             return parsed

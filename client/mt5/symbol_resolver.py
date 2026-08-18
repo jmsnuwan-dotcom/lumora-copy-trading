@@ -1,10 +1,13 @@
+from typing import List, Optional
+
+
 class SymbolResolver:
 
     @staticmethod
     def resolve(
         canonical_symbol: str,
-        broker_symbols: list[str],
-    ) -> str | None:
+        broker_symbols: List[str],
+    ) -> Optional[str]:
 
         canonical = canonical_symbol.upper()
 

@@ -26,6 +26,8 @@ from server.services.payment_settings_service import (
 from server.services.user_service import UserService
 from server.utils.dependencies import get_current_user
 
+from server.database.models.connection import Connection
+
 
 router = APIRouter(
     prefix="/admin",
@@ -163,6 +165,7 @@ def approve_payment(
     "/clients",
     response_model=list[AdminClientResponse],
 )
+
 def get_admin_clients(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
@@ -171,40 +174,88 @@ def get_admin_clients(
         SubscriptionService.get_admin_clients(db)
     )
 
-    return [
-        {
-            "id": subscription.user.id,
-            "subscription_id": subscription.id,
-            "full_name": subscription.user.full_name,
-            "email": subscription.user.email,
-            "phone_number": subscription.user.phone_number,
-            "status": subscription.status,
-            "is_active": subscription.user.is_active,
-            "package": (
-                subscription.package.name
-                if subscription.package
-                else None
-            ),
-            "plan": (
-                subscription.plan.name
-                if subscription.plan
-                else None
-            ),
-            "payment_status": (
-                subscription.payment_status
-            ),
-            "is_trial": subscription.is_trial,
-            "trial_ends_at": (
-                subscription.trial_ends_at
-            ),
-            "start_date": (
-                subscription.start_date
-            ),
-            "end_date": subscription.end_date,
-        }
-        for subscription in subscriptions
-    ]
+    results = []
 
+    for subscription in subscriptions:
+
+        connection = (
+            db.query(Connection)
+            .filter(
+                Connection.user_id == subscription.user.id
+            )
+            .first()
+        )
+
+        results.append(
+            {
+                "id": subscription.user.id,
+                "subscription_id": subscription.id,
+                "full_name": subscription.user.full_name,
+                "email": subscription.user.email,
+                "phone_number": subscription.user.phone_number,
+
+                "status": subscription.status,
+                "is_active": subscription.user.is_active,
+
+                "package": (
+                    subscription.package.name
+                    if subscription.package
+                    else None
+                ),
+                "plan": (
+                    subscription.plan.name
+                    if subscription.plan
+                    else None
+                ),
+                "payment_status": (
+                    subscription.payment_status
+                ),
+
+                "is_trial": subscription.is_trial,
+                "trial_ends_at": (
+                    subscription.trial_ends_at
+                ),
+
+                "start_date": subscription.start_date,
+                "end_date": subscription.end_date,
+
+                # ==================================================
+                # TRADE MONITOR
+                # ==================================================
+
+                "is_online": (
+                    connection.is_online
+                    if connection
+                    else False
+                ),
+
+                "balance": (
+                    connection.balance
+                    if connection
+                    else None
+                ),
+
+                "equity": (
+                    connection.equity
+                    if connection
+                    else None
+                ),
+
+                "trade_condition": (
+                    connection.trade_condition
+                    if connection
+                    else None
+                ),
+
+                "last_seen": (
+                    connection.last_seen
+                    if connection
+                    else None
+                ),
+            }
+        )
+
+    return results
 
 @router.get(
     "/payments/{subscription_id}/slip",

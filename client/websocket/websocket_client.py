@@ -1,7 +1,10 @@
 import asyncio
 import json
 import logging
+import ssl
+from pathlib import Path
 
+import certifi
 import httpx
 import websockets
 
@@ -33,12 +36,63 @@ class WebSocketClient:
         self.executor = TradeExecutor()
 
     # ==========================================================
+    # LOCAL DIAGNOSTIC LOG
+    # ==========================================================
+
+    @staticmethod
+    def _debug(message: str) -> None:
+
+        try:
+
+            log_dir = (
+                Path.home()
+                / "AppData"
+                / "Local"
+                / "Lumora"
+                / "logs"
+            )
+
+            log_dir.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            log_file = (
+                log_dir
+                / "websocket_client.log"
+            )
+
+            with log_file.open(
+                "a",
+                encoding="utf-8",
+            ) as file:
+
+                file.write(
+                    message
+                    + "\n"
+                )
+
+        except Exception:
+
+            pass
+
+    # ==========================================================
     # MAIN START
     # ==========================================================
 
     async def start(self) -> None:
 
-        print("WEBSOCKET START")
+        self._debug(
+            "=" * 70
+        )
+
+        self._debug(
+            "WEBSOCKET START"
+        )
+
+        print(
+            "WEBSOCKET START"
+        )
 
         market_data_task = asyncio.create_task(
             self._market_data_loop()
@@ -50,16 +104,31 @@ class WebSocketClient:
 
                 try:
 
-                    print("CALLING _RUN")
+                    self._debug(
+                        "CALLING _RUN"
+                    )
+
+                    print(
+                        "CALLING _RUN"
+                    )
 
                     await self._run()
 
                 except httpx.HTTPStatusError as e:
 
+                    self._debug(
+                        f"WEBSOCKET HTTP STATUS ERROR: "
+                        f"{e.response.status_code}"
+                    )
+
                     if e.response.status_code in (
                         401,
                         403,
                     ):
+
+                        self._debug(
+                            "WEBSOCKET ACCESS DENIED"
+                        )
 
                         print(
                             "WEBSOCKET ACCESS DENIED:",
@@ -72,6 +141,10 @@ class WebSocketClient:
                         )
 
                         return
+
+                    self._debug(
+                        f"HTTP ERROR: {repr(e)}"
+                    )
 
                     print(
                         "WEBSOCKET HTTP ERROR:",
@@ -86,6 +159,10 @@ class WebSocketClient:
 
                 except Exception as e:
 
+                    self._debug(
+                        f"WEBSOCKET ERROR: {repr(e)}"
+                    )
+
                     print(
                         "WEBSOCKET ERROR:",
                         repr(e),
@@ -98,6 +175,10 @@ class WebSocketClient:
                     await asyncio.sleep(5)
 
         finally:
+
+            self._debug(
+                "WEBSOCKET START FINALLY"
+            )
 
             market_data_task.cancel()
 
@@ -115,7 +196,13 @@ class WebSocketClient:
 
     async def _market_data_loop(self) -> None:
 
-        print("MARKET DATA LOOP STARTED")
+        self._debug(
+            "MARKET DATA LOOP STARTED"
+        )
+
+        print(
+            "MARKET DATA LOOP STARTED"
+        )
 
         while True:
 
@@ -123,7 +210,11 @@ class WebSocketClient:
 
                 MarketDataService.update_gold_price()
 
-            except Exception:
+            except Exception as e:
+
+                self._debug(
+                    f"MARKET DATA ERROR: {repr(e)}"
+                )
 
                 logger.exception(
                     "Market data update failed."
@@ -137,13 +228,25 @@ class WebSocketClient:
 
     async def _run(self) -> None:
 
-        print("ENTER _RUN")
+        self._debug(
+            "ENTER _RUN"
+        )
+
+        print(
+            "ENTER _RUN"
+        )
 
         logger.info(
             "Registering MT5 connection..."
         )
 
-        print("CONNECT START")
+        self._debug(
+            "CONNECT START"
+        )
+
+        print(
+            "CONNECT START"
+        )
 
         self.connection = (
             await ConnectionService.connect(
@@ -152,6 +255,10 @@ class WebSocketClient:
                 mt5_password=self.mt5_password,
                 mt5_server=self.mt5_server,
             )
+        )
+
+        self._debug(
+            "CONNECTION REGISTERED"
         )
 
         logger.info(
@@ -176,6 +283,14 @@ class WebSocketClient:
             ws_url,
         )
 
+        self._debug(
+            "WEBSOCKET URL CREATED"
+        )
+
+        self._debug(
+            f"ACTUAL WS URL: {ws_url}"
+        )
+
         print(
             "WS URL:",
             ws_url,
@@ -185,11 +300,28 @@ class WebSocketClient:
             "BEFORE CONNECT"
         )
 
+        self._debug(
+            "BEFORE CONNECT"
+        )
+
+        ssl_context = ssl.create_default_context(
+            cafile=certifi.where()
+        )
+
+        self._debug(
+            f"SSL CA FILE: {certifi.where()}"
+        )
+
         async with websockets.connect(
             ws_url,
+            ssl=ssl_context,
             ping_interval=20,
             ping_timeout=20,
         ) as websocket:
+
+            self._debug(
+                "AFTER CONNECT"
+            )
 
             print(
                 "AFTER CONNECT"
@@ -199,11 +331,27 @@ class WebSocketClient:
                 "WebSocket connected."
             )
 
+            self._debug(
+                "WEBSOCKET CONNECTED"
+            )
+
             print(
                 "WAITING FOR MESSAGE"
             )
 
+            self._debug(
+                "WAITING FOR MESSAGE"
+            )
+
             async for message in websocket:
+
+                self._debug(
+                    "MESSAGE RECEIVED"
+                )
+
+                self._debug(
+                    f"RAW MESSAGE: {message}"
+                )
 
                 print(
                     "HANDLE MESSAGE:",
@@ -221,7 +369,11 @@ class WebSocketClient:
                         message
                     )
 
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+
+                    self._debug(
+                        f"JSON DECODE ERROR: {repr(e)}"
+                    )
 
                     logger.warning(
                         "Invalid message: %s",
@@ -229,6 +381,10 @@ class WebSocketClient:
                     )
 
                     continue
+
+                self._debug(
+                    f"PARSED MESSAGE: {data}"
+                )
 
                 print(
                     "PARSED:",
@@ -253,6 +409,18 @@ class WebSocketClient:
         message: dict,
     ) -> None:
 
+        self._debug(
+            "=" * 70
+        )
+
+        self._debug(
+            "HANDLE MESSAGE"
+        )
+
+        self._debug(
+            f"MESSAGE: {message}"
+        )
+
         print(
             "HANDLE MESSAGE:",
             message,
@@ -260,6 +428,10 @@ class WebSocketClient:
 
         action = message.get(
             "action"
+        )
+
+        self._debug(
+            f"ACTION: {action}"
         )
 
         print(
@@ -273,12 +445,24 @@ class WebSocketClient:
             "CLOSE",
         }:
 
+            self._debug(
+                f"UNKNOWN ACTION: {action}"
+            )
+
             logger.warning(
                 "Unknown message: %s",
                 message,
             )
 
             return
+
+        self._debug(
+            "VALID ACTION"
+        )
+
+        self._debug(
+            "EXECUTING TRADE"
+        )
 
         print(
             "EXECUTING TRADE"
@@ -290,12 +474,20 @@ class WebSocketClient:
                 message
             )
 
+            self._debug(
+                f"EXECUTOR RETURNED: {action}"
+            )
+
             logger.info(
                 "%s executed successfully.",
                 action,
             )
 
-        except Exception:
+        except Exception as e:
+
+            self._debug(
+                f"TRADE EXECUTION EXCEPTION: {repr(e)}"
+            )
 
             logger.exception(
                 "Trade execution failed."

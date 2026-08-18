@@ -2,10 +2,9 @@ import time
 import logging
 
 from client.api.heartbeat_api import HeartbeatAPI
-from client.api.signal_api import SignalAPI
-from client.api.signal_delivery_api import SignalDeliveryAPI
 from client.mt5.trade_executor import TradeExecutor
-from client.api.package_api import PackageAPI
+from client.mt5.mt5_client import MT5Client
+import MetaTrader5 as mt5
 
 
 logger = logging.getLogger(__name__)
@@ -18,44 +17,46 @@ class PollingService:
 
         logger.info("Polling service started.")
 
-        last_package_sync = 0
-
         while True:
 
             try:
-                HeartbeatAPI.send(token)
+                account = MT5Client.account_info()
 
-                if time.time() - last_package_sync >= 60:
-                    PackageAPI.sync(token)
-                    last_package_sync = time.time()
+                balance = None
+                equity = None
+                trade_condition = "NO TRADE"
 
-                signals = SignalAPI.get_received_signals(token)
-                
-                if signals is None:
-                    time.sleep(2)
-                    continue
+                if account is not None:
+                    balance = float(account.balance)
+                    equity = float(account.equity)
 
-                for signal in signals:
+                positions = mt5.positions_get()
 
-                    logger.info(
-                        f"Executing Signal: {signal['delivery_id']}"
+                if positions:
+                    has_buy = any(
+                        position.type == mt5.ORDER_TYPE_BUY
+                        for position in positions
                     )
 
-                    result = TradeExecutor.execute(signal)
-
-                    if result is None:
-                        logger.warning("Trade execution failed.")
-                        continue
-
-                    SignalDeliveryAPI.mark_executed(
-                        token=token,
-                        delivery_id=signal["delivery_id"],
-                        mt5_ticket=result.order,
+                    has_sell = any(
+                        position.type == mt5.ORDER_TYPE_SELL
+                        for position in positions
                     )
 
-                    logger.info(
-                        f"Trade Executed: {result.order}"
-                    )
+                    if has_buy and has_sell:
+                        trade_condition = "BUY + SELL"
+                    elif has_buy:
+                        trade_condition = "BUY"
+                    elif has_sell:
+                        trade_condition = "SELL"
+
+                HeartbeatAPI.send(
+                    token=token,
+                    balance=balance,
+                    equity=equity,
+                    trade_condition=trade_condition,
+                )
+
 
             except Exception as e:
                 logger.exception(e)

@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Optional
 
 
 class SymbolStorage:
@@ -48,7 +49,7 @@ class SymbolStorage:
     @classmethod
     def get_gold_symbol(
         cls,
-    ) -> str | None:
+    ) -> Optional[str]:
 
         file_path = cls._file_path()
 

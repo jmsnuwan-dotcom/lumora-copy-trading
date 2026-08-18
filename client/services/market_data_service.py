@@ -1,3 +1,5 @@
+from typing import Optional
+
 import MetaTrader5 as mt5
 
 from client.storage.symbol_storage import SymbolStorage
@@ -5,10 +7,10 @@ from client.storage.symbol_storage import SymbolStorage
 
 class MarketDataService:
 
-    _price: float | None = None
+    _price: Optional[float] = None
 
     @classmethod
-    def get_gold_symbol(cls) -> str | None:
+    def get_gold_symbol(cls) -> Optional[str]:
 
         symbol = SymbolStorage.get_gold_symbol()
 
@@ -18,7 +20,7 @@ class MarketDataService:
         return symbol.strip()
 
     @classmethod
-    def update_gold_price(cls) -> float | None:
+    def update_gold_price(cls) -> Optional[float]:
 
         try:
 
@@ -59,6 +61,6 @@ class MarketDataService:
             return None
 
     @classmethod
-    def get_gold_price(cls) -> float | None:
+    def get_gold_price(cls) -> Optional[float]:
 
         return cls._price
