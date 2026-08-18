@@ -30,6 +30,12 @@ class AdminClientResponse(BaseModel):
 
     is_online: bool = False
 
+    mt5_login: str | None = None
+    mt5_server: str | None = None
+
     balance: float | None = None
     equity: float | None = None
+
     trade_condition: str | None = None
+
+    last_seen: datetime | None = None

@@ -138,6 +138,7 @@ def get_pending_payments(
 
     return payments
 
+
 @router.post(
     "/payments/{subscription_id}/approve",
     response_model=SubscriptionResponse,
@@ -165,7 +166,6 @@ def approve_payment(
     "/clients",
     response_model=list[AdminClientResponse],
 )
-
 def get_admin_clients(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
@@ -229,6 +229,18 @@ def get_admin_clients(
                     else False
                 ),
 
+                "mt5_login": (
+                    connection.mt5_login
+                    if connection
+                    else None
+                ),
+
+                "mt5_server": (
+                    connection.mt5_server
+                    if connection
+                    else None
+                ),
+
                 "balance": (
                     connection.balance
                     if connection
@@ -256,6 +268,7 @@ def get_admin_clients(
         )
 
     return results
+
 
 @router.get(
     "/payments/{subscription_id}/slip",
