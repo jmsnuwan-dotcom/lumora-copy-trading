@@ -254,8 +254,8 @@ class DashboardService:
             "last_seen": last_seen,
             "client_version": client_version,
 
-            "balance": None,
-            "equity": None,
+            "balance": connection.balance,
+            "equity": connection.equity,
             "open_trades": None,
 
             "remaining_days": remaining_days,
