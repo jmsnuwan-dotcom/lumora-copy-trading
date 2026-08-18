@@ -93,6 +93,9 @@ class ConnectionService:
     def heartbeat(
         db: Session,
         user_id: int,
+        balance: float | None = None,
+        equity: float | None = None,
+        trade_condition: str | None = None,
     ):
 
         connection = (
@@ -107,5 +110,14 @@ class ConnectionService:
         connection.last_seen = datetime.now(UTC)
         connection.is_online = True
         connection.status = "connected"
+
+        if balance is not None:
+            connection.balance = balance
+
+        if equity is not None:
+            connection.equity = equity
+
+        if trade_condition is not None:
+            connection.trade_condition = trade_condition
 
         db.commit()

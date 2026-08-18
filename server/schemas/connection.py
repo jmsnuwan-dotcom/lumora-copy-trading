@@ -19,6 +19,10 @@ class ConnectionResponse(BaseModel):
     mt5_server: str
     status: str
 
+    balance: Optional[float] = None
+    equity: Optional[float] = None
+    trade_condition: Optional[str] = None
+
     class Config:
         from_attributes = True
 

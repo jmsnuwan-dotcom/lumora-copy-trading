@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class AdminClientResponse(BaseModel):
     id: int
     subscription_id: int
+
     full_name: str
     email: str
     phone_number: str | None = None
@@ -22,3 +23,13 @@ class AdminClientResponse(BaseModel):
 
     start_date: datetime | None = None
     end_date: datetime | None = None
+
+    # ==================================================
+    # CONNECTION STATUS
+    # ==================================================
+
+    is_online: bool = False
+
+    balance: float | None = None
+    equity: float | None = None
+    trade_condition: str | None = None

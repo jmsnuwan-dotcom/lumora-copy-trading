@@ -83,6 +83,14 @@ class Connection(Base):
         nullable=False,
     )
 
+    balance: Mapped[float | None] = mapped_column(
+        nullable=True,
+    )
+
+    equity: Mapped[float | None] = mapped_column(
+        nullable=True,
+    )
+
     ip_address: Mapped[str | None] = mapped_column(
         String(45),
         nullable=True,
@@ -90,6 +98,11 @@ class Connection(Base):
 
     client_version: Mapped[str | None] = mapped_column(
         String(20),
+        nullable=True,
+    )
+
+    trade_condition: Mapped[str | None] = mapped_column(
+        String(30),
         nullable=True,
     )
 

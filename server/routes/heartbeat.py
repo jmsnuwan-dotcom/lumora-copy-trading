@@ -1,4 +1,7 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from server.database.db import get_db
@@ -15,8 +18,15 @@ router = APIRouter(
 )
 
 
+class HeartbeatRequest(BaseModel):
+    balance: Optional[float] = None
+    equity: Optional[float] = None
+    trade_condition: Optional[str] = None
+
+
 @router.post("")
 def heartbeat(
+    data: HeartbeatRequest,
     current_user=Depends(
         require_active_subscription
     ),
@@ -29,6 +39,9 @@ def heartbeat(
     ConnectionService.heartbeat(
         db=db,
         user_id=current_user.id,
+        balance=data.balance,
+        equity=data.equity,
+        trade_condition=data.trade_condition,
     )
 
     return {
